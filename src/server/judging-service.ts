@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray } from "drizzle-orm";
+import { and, asc, count, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
   conflictsOfInterest,
@@ -34,6 +34,7 @@ import {
   verifyPassword,
 } from "./auth-service";
 import { recordAuditLog } from "./audit-service";
+import { enqueueWebhookEvent } from "./webhook-service";
 
 type Criteria = RubricCriterion[];
 
@@ -378,6 +379,19 @@ export async function saveJudgeScore(
       rubricScores: input.rubricScoresJson,
     },
   });
+
+  // judging.completed has no stored flag — recomputed on every score save.
+  // The partial unique index on webhook_deliveries (endpointId, eventId,
+  // eventType) is what actually prevents this from re-firing on every
+  // subsequent save once the event is already fully scored; this check is
+  // just an optimization to skip the enqueue attempt in the common case.
+  const [totals] = await db
+    .select({ assigned: count(), completed: count(sql`case when ${judgeAssignments.status} = 'DONE' then 1 end`) })
+    .from(judgeAssignments)
+    .where(eq(judgeAssignments.eventId, assignment.eventId));
+  if (totals && totals.assigned > 0 && totals.assigned === totals.completed) {
+    await enqueueWebhookEvent(assignment.eventId, "judging.completed", { eventId: assignment.eventId });
+  }
 
   return score;
 }
@@ -1067,6 +1081,19 @@ export async function getAssignmentProgress(actor: DbUser, eventId: string) {
 
 export async function getRankings(actor: DbUser, eventId: string) {
   await assertOrganizer(actor, eventId);
+  return computeRankings(eventId);
+}
+
+// Same computation as getRankings, for the one caller allowed to see it
+// without being this event's organizer: the public results manifest
+// (records-service.ts), which only calls this once deriveEventStatus(event)
+// is PUBLISHED — that check lives there, not here, since this function has
+// no actor to check a role against.
+export async function getPublishedRankings(eventId: string) {
+  return computeRankings(eventId);
+}
+
+async function computeRankings(eventId: string) {
   const rows = await db
     .select({
       submissionId: submissions.id,

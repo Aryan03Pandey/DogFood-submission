@@ -600,6 +600,63 @@ export function apiUnregisterForEvent(
   )
 }
 
+// API tokens (Account Settings) ------------------------------------------------
+
+export interface ApiTokenPayload {
+  id: string
+  name: string
+  tokenPrefix: string
+  createdAt: string
+  lastUsedAt: string | null
+  revokedAt: string | null
+}
+
+export function apiListTokens(): Promise<{ tokens: ApiTokenPayload[] }> {
+  return request<{ tokens: ApiTokenPayload[] }>('/api/tokens')
+}
+
+export function apiCreateToken(
+  name: string,
+): Promise<{ id: string; name: string; token: string; createdAt: string }> {
+  return apiWrite('/api/tokens', 'POST', { name })
+}
+
+export function apiRevokeToken(tokenId: string): Promise<{ ok: boolean }> {
+  return apiWrite<{ ok: boolean }>(`/api/tokens/${tokenId}`, 'DELETE')
+}
+
+// Signed-envelope verification (public /verify page) --------------------------
+
+export interface VerifyResult {
+  valid: boolean
+  kid?: string
+  type?: string
+  reason?: string
+}
+
+export function apiVerifyEnvelope(envelope: unknown): Promise<VerifyResult> {
+  return request<VerifyResult>('/api/verify', jsonBody(envelope))
+}
+
+// Instance-wide data import (Event Settings, superadmin only) -----------------
+
+export interface ImportSummaryPayload {
+  dryRun: boolean
+  counts: Record<string, number>
+  placeholderPasswordUserIds: string[]
+}
+
+export function apiImportData(
+  payload: unknown,
+  options: { dryRun?: boolean; force?: boolean } = {},
+): Promise<ImportSummaryPayload> {
+  const search = new URLSearchParams()
+  if (options.dryRun) search.set('dryRun', 'true')
+  if (options.force) search.set('force', 'true')
+  const suffix = search.size > 0 ? `?${search.toString()}` : ''
+  return apiWrite<ImportSummaryPayload>(`/api/admin/import${suffix}`, 'POST', payload)
+}
+
 // Team submissions (SUBMISSIONS.md) --------------------------------------------------
 //
 // Same rule as auth above: components call these helpers, never fetch()
@@ -1001,4 +1058,63 @@ export function apiFlagSubmission(input: {
 
 export function apiUnflagSubmission(assignmentId: string): Promise<{ cleared: boolean }> {
   return apiWrite('/api/judge/flags', 'DELETE', { assignmentId })
+}
+
+// Prize awards (Tier 4.7) — certificate downloads themselves are plain `<a
+// href download>` links (same pattern as the Export button in
+// settings-panel.tsx), since the browser already carries the session
+// cookie; only the Awards management list/create/revoke actions go through
+// fetch here.
+
+export interface PrizeAwardPayload {
+  id: string
+  prizeId: string
+  prizeTitle: string
+  submissionId: string
+  submissionTitle: string
+  teamName: string
+  awardedAt: string
+}
+
+export function apiListPrizeAwards(eventId: string): Promise<{ awards: PrizeAwardPayload[] }> {
+  return request<{ awards: PrizeAwardPayload[] }>(`/api/events/${eventId}/prize-awards`)
+}
+
+export function apiAwardPrize(
+  eventId: string,
+  input: { prizeId: string; submissionId: string },
+): Promise<{ award: unknown }> {
+  return apiWrite(`/api/events/${eventId}/prize-awards`, 'POST', input)
+}
+
+export function apiRevokePrizeAward(eventId: string, awardId: string): Promise<{ revoked: boolean }> {
+  return apiWrite(`/api/events/${eventId}/prize-awards/${awardId}`, 'DELETE')
+}
+
+// Webhooks (Tier 4.5).
+
+export interface WebhookEndpointPayload {
+  id: string
+  url: string
+  isActive: boolean
+  createdAt: string
+}
+
+export function apiListWebhooks(eventId: string): Promise<{ webhooks: WebhookEndpointPayload[] }> {
+  return request<{ webhooks: WebhookEndpointPayload[] }>(`/api/events/${eventId}/webhooks`)
+}
+
+export function apiRegisterWebhook(
+  eventId: string,
+  url: string,
+): Promise<{ webhook: WebhookEndpointPayload & { secret: string } }> {
+  return apiWrite(`/api/events/${eventId}/webhooks`, 'POST', { url })
+}
+
+export function apiRevokeWebhook(eventId: string, webhookId: string): Promise<{ revoked: boolean }> {
+  return apiWrite(`/api/events/${eventId}/webhooks/${webhookId}`, 'DELETE')
+}
+
+export function apiTestWebhook(eventId: string, webhookId: string): Promise<{ sent: boolean }> {
+  return apiWrite(`/api/events/${eventId}/webhooks/${webhookId}/test`, 'POST')
 }

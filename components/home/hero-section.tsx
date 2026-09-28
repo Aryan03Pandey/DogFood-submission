@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Rocket, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -72,17 +72,6 @@ export default function HeroSection() {
               )}
             >
               Explore hackathons
-            </Link>
-            <Link
-              href="/console/events/new"
-              className={cn(
-                'inline-flex h-12 items-center gap-1.5 rounded-full border border-fuchsia-700/50 px-7 text-[14px] font-bold text-fuchsia-700',
-                'transition-all hover:border-fuchsia-600 hover:bg-fuchsia-500/10 hover:shadow-[0_0_24px_rgba(162,28,175,0.25)]',
-                'dark:border-fuchsia-400/70 dark:text-fuchsia-100 dark:hover:border-fuchsia-300 dark:hover:bg-fuchsia-400/10 dark:hover:shadow-[0_0_24px_rgba(232,121,249,0.35)]',
-              )}
-            >
-              <Rocket size={14} strokeWidth={2} aria-hidden="true" />
-              Host your event
             </Link>
           </motion.div>
         </div>

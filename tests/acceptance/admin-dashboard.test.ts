@@ -101,7 +101,7 @@ describe('dashboard UI contract', () => {
     expect(legacy).toMatch(/\/console\?eventId=/)
   })
 
-  it('judging tab is fully built and full export is enabled (IMPROVEMENTS.md item 11)', () => {
+  it('judging tab is fully built and both exports are real (signed JSON + CSV)', () => {
     const panel = read('components/console/dashboard/judging-panel.tsx')
     expect(panel).toMatch(/JudgesManager/)
     expect(panel).toMatch(/RubricBuilder/)
@@ -109,7 +109,8 @@ describe('dashboard UI contract', () => {
     expect(panel).toMatch(/AssignmentsPanel/)
     expect(panel).not.toMatch(/not set up yet/i)
     const settings = read('components/console/dashboard/settings-panel.tsx')
-    expect(settings).toMatch(/\/api\/events\/\$\{event\.id\}\/export/)
+    expect(settings).toMatch(/export\.json/)
+    expect(settings).toMatch(/Export everything as CSV/)
     expect(settings).not.toMatch(/coming soon/i)
   })
 

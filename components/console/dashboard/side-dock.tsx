@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { BookOpen } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { DASHBOARD_TABS, type DashboardTabId } from '@/components/console/dashboard/tabs'
@@ -114,6 +115,16 @@ export function SideDock({
               return <Icon size={17} strokeWidth={activeTab === 'settings' ? 2.3 : 1.8} aria-hidden="true" />
             })()}
             <span className="flex-1">Event settings</span>
+          </Link>
+          <Link
+            href="/api/docs"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="API docs (opens in a new tab)"
+            className="flex h-11 items-center gap-3 rounded-xl px-3 text-left text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <BookOpen size={17} strokeWidth={1.8} aria-hidden="true" />
+            <span className="flex-1">API docs</span>
           </Link>
         </nav>
       </div>

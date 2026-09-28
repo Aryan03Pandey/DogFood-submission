@@ -105,6 +105,34 @@
             "tag": "0013_tier3_comments",
             "version": "6",
             "when": 1793000000001
+        },
+        {
+            "breakpoints": true,
+            "idx": 15,
+            "tag": "0014_signing_keys",
+            "version": "6",
+            "when": 1794000000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 16,
+            "tag": "0015_api_tokens",
+            "version": "6",
+            "when": 1794000000001
+        },
+        {
+            "breakpoints": true,
+            "idx": 17,
+            "tag": "0016_webhooks",
+            "version": "6",
+            "when": 1795000000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 18,
+            "tag": "0017_prize_awards",
+            "version": "6",
+            "when": 1795000000001
         }
     ],
     "version": "7"

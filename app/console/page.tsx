@@ -13,7 +13,8 @@ import {
   listDashboardSubmissionsPage,
   listEventMembers,
 } from '@/src/server/dashboard-service'
-import { getEvent, listManagedEvents, serializeEvent } from '@/src/server/event-service'
+import { getEvent, listManagedEvents, listPrizes, serializeEvent } from '@/src/server/event-service'
+import { getPublicBaseUrl } from '@/src/server/public-url'
 import {
   getAssignmentProgress,
   getEventJudges,
@@ -21,6 +22,8 @@ import {
   getRubric,
 } from '@/src/server/judging-service'
 import { getVotingAnalytics } from '@/src/server/voting-service'
+import { listPrizeAwards } from '@/src/server/certificate-service'
+import { listWebhooks } from '@/src/server/webhook-service'
 import { GalleryPanel } from '@/components/console/dashboard/gallery-panel'
 import { JudgingPanel } from '@/components/console/dashboard/judging-panel'
 import { OverviewPanel } from '@/components/console/dashboard/overview-panel'
@@ -183,13 +186,26 @@ export default async function ConsolePage({
                   rubric={await getRubric(session.user, event.id)}
                   progress={await getAssignmentProgress(session.user, event.id)}
                   rankings={await getRankings(session.user, event.id)}
+                  prizes={await listPrizes(event.id, session.user)}
+                  finalSubmissions={(await listDashboardSubmissions(event.id))
+                    .filter((submission) => submission.status === 'final')
+                    .map((submission) => ({ id: submission.id, title: submission.title, teamName: submission.teamName }))}
+                  prizeAwards={(await listPrizeAwards(session.user, event.id)).map((award) => ({
+                    ...award,
+                    awardedAt: award.awardedAt.toISOString(),
+                  }))}
                 />
               )}
               {tab === 'voting' && (
                 <VotingPanel initial={await getVotingAnalytics(session.user, event.id)} />
               )}
               {tab === 'gallery' && (
-                <GalleryPanel eventId={event.id} initialItems={await listDashboardGallery(event.id)} />
+                <GalleryPanel
+                  eventId={event.id}
+                  initialItems={await listDashboardGallery(event.id)}
+                  eventStatus={event.status}
+                  publicBaseUrl={await getPublicBaseUrl()}
+                />
               )}
               {tab === 'settings' && (
                 <SettingsPanel
@@ -197,6 +213,10 @@ export default async function ConsolePage({
                   members={await listEventMembers(event.id)}
                   selfId={session.user.id}
                   isSuperadmin={session.user.role === 'SUPERADMIN'}
+                  webhooks={(await listWebhooks(session.user, event.id)).map((webhook) => ({
+                    ...webhook,
+                    createdAt: webhook.createdAt.toISOString(),
+                  }))}
                 />
               )}
             </>

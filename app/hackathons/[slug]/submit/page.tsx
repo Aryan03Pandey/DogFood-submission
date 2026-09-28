@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { AuthError, getEventRole, getSessionUser } from '@/src/server/auth-service'
 import { getEventBySlug, listTracks, serializeEvent, serializeTrack } from '@/src/server/event-service'
 import { getMySubmission } from '@/src/server/submission-service'
+import { getPrizeAwardForSubmission } from '@/src/server/certificate-service'
 import { SubmissionForm } from '@/components/submission/submission-form'
 
 interface Params {
@@ -62,11 +63,33 @@ export default async function EventSubmitPage({ params }: Params) {
   ])
   // serializeEvent already derives the effective status from the server clock.
   const submissionsOpen = event.status === 'SUBMISSION'
+  const prizeAward =
+    summary?.status === 'final' ? await getPrizeAwardForSubmission(summary.id).catch(() => null) : null
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-12">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
       <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Make a submission</h1>
+      {summary?.status === 'final' && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a
+            href={`/api/events/${event.id}/certificates/participant/${summary.id}`}
+            download
+            className="inline-flex h-9 items-center rounded-lg border border-border px-4 text-[12px] font-bold text-foreground transition-colors hover:bg-muted"
+          >
+            Download certificate
+          </a>
+          {prizeAward && (
+            <a
+              href={`/api/events/${event.id}/certificates/winner/${prizeAward.id}`}
+              download
+              className="inline-flex h-9 items-center rounded-lg bg-[#16a34a] px-4 text-[12px] font-bold text-white transition-colors hover:bg-[#15803d]"
+            >
+              Download winner certificate — {prizeAward.prizeTitle}
+            </a>
+          )}
+        </div>
+      )}
       <div className="mt-6">
         <SubmissionForm
           eventId={event.id}

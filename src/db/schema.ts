@@ -448,6 +448,41 @@ export const auditLogs = pgTable("audit_logs", {
   payloadJson: jsonb("payload_json").$type<Record<string, unknown>>(),
   createdAt: createdAt(),
 });
+// Public half of the Ed25519 signing keypair (src/server/crypto/keys.ts holds
+// the private PEM on disk, never in this table). Supports rotation: retiring
+// a key (setting retiredAt) leaves older signatures still verifiable.
+export const signingKeys = pgTable("signing_keys", {
+  kid: text("kid").primaryKey(),
+  publicKeyPem: text("public_key_pem").notNull(),
+  createdAt: createdAt(),
+  retiredAt: timestamp("retired_at", { withTimezone: true }),
+});
+
+// Long-lived bearer credentials for scripts/integrations (dfk_<random>).
+// Hashed identically to sessions (SHA-256, raw value never stored) so a
+// leaked DB row is as useless as a leaked session row; unlike sessions they
+// carry a human label and are resolved alongside the session cookie in
+// src/server/http.ts, mapping to the same SessionUser shape.
+export const apiTokens = pgTable(
+  "api_tokens",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    // First 12 chars of the raw token (e.g. "dfk_Ab12Cd34"), stored in the
+    // clear purely for display in a token list — the hash alone can't be
+    // turned back into anything showable.
+    tokenPrefix: text("token_prefix").notNull(),
+    createdAt: createdAt(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => ({ apiTokensHashUnique: uniqueIndex("api_tokens_hash_unique").on(t.tokenHash) }),
+);
+
 // Public comments on a finalized submission (Tier-3 voting page). Anyone can
 // read; posting needs a session; organizers can remove. Soft delete keeps
 // the thread readable after moderation.
@@ -483,6 +518,87 @@ export const eventRoles = pgTable(
     eventRoleUserIdx: index("event_role_user_idx").on(t.userId),
   }),
 );
+
+// Organizer-registered delivery targets for a single event's webhook
+// notifications (Tier 4.5). `secret` is the HMAC key, shown once on
+// creation and never returned again — same treatment as an API token's raw
+// value (token-service.ts).
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: id(),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  secret: text("secret").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: createdAt(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+});
+
+// The outbox (Tier 4.5): one row per (endpoint, event occurrence) to
+// deliver. eventId is denormalized off webhookEndpoints purely so the
+// singleton-per-event event types below can be deduplicated with a partial
+// unique index instead of an app-level existence check.
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: id(),
+    endpointId: uuid("endpoint_id")
+      .notNull()
+      .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    payloadJson: jsonb("payload_json").$type<Record<string, unknown>>().notNull(),
+    status: text("status").notNull().default("PENDING"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    // Set while a worker holds the row; a lease that has expired (worker
+    // crashed mid-delivery) is reclaimed by the next poll instead of a
+    // separate cleanup job — see scripts/webhook-worker.ts.
+    leaseUntil: timestamp("lease_until", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  },
+  (t) => ({
+    // judging.completed and results.published are per-event singletons;
+    // submission.created legitimately fires many times per event and is
+    // excluded from this constraint via the WHERE clause.
+    webhookDeliveriesSingletonEventIdx: uniqueIndex(
+      "webhook_deliveries_singleton_event_idx",
+    )
+      .on(t.endpointId, t.eventId, t.eventType)
+      .where(sql`event_type IN ('judging.completed', 'results.published')`),
+  }),
+);
+
+// Organizer-recorded prize winners (Tier 4.7 needs this to exist before a
+// "winner certificate" means anything — prizes previously only stored the
+// prize definition, never who won it). One winner per prize.
+export const prizeAwards = pgTable("prize_awards", {
+  id: id(),
+  prizeId: uuid("prize_id")
+    .notNull()
+    .unique()
+    .references(() => prizes.id, { onDelete: "cascade" }),
+  submissionId: uuid("submission_id")
+    .notNull()
+    .references(() => submissions.id, { onDelete: "cascade" }),
+  // Explicit column name: the shared createdAt() helper hardcodes
+  // "created_at", but this table's migration column is "awarded_at".
+  awardedAt: timestamp("awarded_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  awardedBy: uuid("awarded_by")
+    .notNull()
+    .references(() => users.id),
+});
 
 export type UserRole = (typeof roleEnum.enumValues)[number];
 export type EventRole = (typeof eventRoleEnum.enumValues)[number];
@@ -537,7 +653,12 @@ export const allTables = {
   votes,
   submissionComments,
   auditLogs,
+  signingKeys,
+  apiTokens,
   conflictsOfInterest,
+  webhookEndpoints,
+  webhookDeliveries,
+  prizeAwards,
 };
 // PostgreSQL production migrations should add pg_trgm, tsvector indexes, roster cardinality checks, and the prize floor trigger.
 // Roster limits mirror REQUIREMENTS §4 (Team Engine): $1 \le Team Size \le 4$,

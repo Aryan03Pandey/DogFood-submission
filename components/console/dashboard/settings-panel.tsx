@@ -3,35 +3,42 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Download, Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { Download, Pencil, Trash2, Upload, UserMinus, UserPlus } from 'lucide-react'
 
 import {
   ApiError,
   apiAssignEventRole,
   apiDeleteEvent,
+  apiImportData,
   apiLookupUser,
   apiRemoveEventRole,
   apiSetGlobalRole,
   type EventPayload,
+  type ImportSummaryPayload,
 } from '@/lib/api-client'
 import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
+import { WebhooksPanel } from '@/components/console/dashboard/webhooks-panel'
 import type { DashboardMember } from '@/src/server/dashboard-service'
+import type { WebhookEndpointPayload } from '@/lib/api-client'
+import { cn } from '@/lib/utils'
 
 type GrantableRole = 'ORGANIZER' | 'JUDGE' | 'ADMIN'
 
 // Event Settings tab: go-live, member management (organizers, judges, and —
-// for superadmins — global admins), danger zone, and a disabled
+// for superadmins — global admins), webhooks, danger zone, and a disabled
 // Export-everything placeholder. Event editing lives in a separate window.
 export function SettingsPanel({
   event,
   members,
   selfId,
   isSuperadmin,
+  webhooks,
 }: {
   event: EventPayload
   members: DashboardMember[]
   selfId: string
   isSuperadmin: boolean
+  webhooks: WebhookEndpointPayload[]
 }) {
   const router = useRouter()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -42,6 +49,107 @@ export function SettingsPanel({
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<GrantableRole>('ORGANIZER')
   const isDraft = event.status === 'DRAFT'
+
+  // Import data (instance-wide — see the section below; this is NOT scoped
+  // to `event`, it's a superadmin-only restore of the whole instance or
+  // whatever an uploaded export file itself scopes to).
+  const [importFileName, setImportFileName] = useState<string | null>(null)
+  const [importPayload, setImportPayload] = useState<unknown>(null)
+  const [importForce, setImportForce] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importStage, setImportStage] = useState<'idle' | 'dryRunning' | 'dryRunDone' | 'applying' | 'applied'>('idle')
+  const [importSummary, setImportSummary] = useState<ImportSummaryPayload | null>(null)
+  const [needsForceHint, setNeedsForceHint] = useState(false)
+  const [confirmingApply, setConfirmingApply] = useState(false)
+
+  // The file input AND the force checkbox both reset the dry-run gate: a
+  // dry run only proves what applying THIS file with THIS force value would
+  // do, so changing either one invalidates it (a user must not be able to
+  // dry-run without force, flip the checkbox, then Apply with untested
+  // settings).
+  function resetImportProgress() {
+    setImportStage('idle')
+    setImportSummary(null)
+    setImportError(null)
+    setNeedsForceHint(false)
+    setConfirmingApply(false)
+  }
+
+  async function onImportFileChange(fileList: FileList | null) {
+    const file = fileList?.[0]
+    resetImportProgress()
+    if (!file) {
+      setImportFileName(null)
+      setImportPayload(null)
+      return
+    }
+    setImportFileName(file.name)
+    try {
+      setImportPayload(JSON.parse(await file.text()))
+    } catch {
+      setImportPayload(null)
+      setImportError("That file isn't valid JSON.")
+    }
+  }
+
+  function onImportForceChange(checked: boolean) {
+    setImportForce(checked)
+    resetImportProgress()
+  }
+
+  function importErrorMessage(err: unknown): string {
+    if (err instanceof ApiError) {
+      if (err.code === 'INSTANCE_NOT_EMPTY') return 'instance-not-empty' // handled separately below
+      if (err.status === 413) return 'File too large — 25MB max.'
+      if (err.status === 411) return 'The upload was missing its length — try a smaller file or a different browser.'
+      if (err.code === 'INVALID_SIGNATURE') return 'This file is signed, but the signature does not match its contents — it may have been altered.'
+      if (err.code === 'FORBIDDEN') return 'You cannot import data.'
+    }
+    return 'Import failed. Try again.'
+  }
+
+  async function runDryRun() {
+    if (importPayload === null || importStage === 'dryRunning') return
+    setImportStage('dryRunning')
+    setImportError(null)
+    setNeedsForceHint(false)
+    try {
+      const summary = await apiImportData(importPayload, { dryRun: true, force: importForce })
+      setImportSummary(summary)
+      setImportStage('dryRunDone')
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'INSTANCE_NOT_EMPTY') {
+        setNeedsForceHint(true)
+        setImportError(
+          'This instance already has data beyond the seed/fixtures — check "Force overwrite" below to proceed anyway.',
+        )
+      } else {
+        setImportError(importErrorMessage(err))
+      }
+      setImportStage('idle')
+    }
+  }
+
+  async function applyImport() {
+    if (importStage !== 'dryRunDone' && !confirmingApply) return
+    if (!confirmingApply) {
+      setConfirmingApply(true)
+      return
+    }
+    setImportStage('applying')
+    setImportError(null)
+    try {
+      const summary = await apiImportData(importPayload, { dryRun: false, force: importForce })
+      setImportSummary(summary)
+      setImportStage('applied')
+      router.refresh()
+    } catch (err) {
+      setImportError(importErrorMessage(err))
+      setImportStage('dryRunDone')
+    } finally {
+      setConfirmingApply(false)
+    }
+  }
 
   async function removeEvent() {
     if (!confirmingDelete) {
@@ -233,16 +341,128 @@ export function SettingsPanel({
       <section aria-label="Export" className="rounded-xl border border-border bg-card p-6">
         <h3 className="text-[15px] font-bold text-foreground">Export</h3>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Full-event export: participants, teams, submissions, judging, and voting in one CSV document.
+          Downloads everything for this event — tracks, prizes, teams, submissions, judging, and
+          votes — as one cryptographically signed JSON file. Verify it anytime at{' '}
+          <a href="/verify" className="font-semibold text-foreground underline">
+            /verify
+          </a>
+          . Full-event CSV export (participants, teams, submissions, judging, and voting) is
+          available too.
         </p>
-        <a
-          href={`/api/events/${event.id}/export`}
-          download
-          className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted"
-        >
-          <Download size={15} strokeWidth={1.8} aria-hidden="true" /> Export everything as CSV
-        </a>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href={`/api/events/${event.id}/export.json`}
+            download
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted"
+          >
+            <Download size={15} strokeWidth={1.8} aria-hidden="true" /> Export event (JSON)
+          </a>
+          <a
+            href={`/api/events/${event.id}/export`}
+            download
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted"
+          >
+            <Download size={15} strokeWidth={1.8} aria-hidden="true" /> Export everything as CSV
+          </a>
+        </div>
       </section>
+
+      {isSuperadmin && (
+        <section aria-label="Import" className="rounded-xl border border-border bg-card p-6">
+          <h3 className="text-[15px] font-bold text-foreground">Import data (instance-wide)</h3>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Restores a previously exported file. This is <span className="font-semibold text-foreground">not</span>{' '}
+            limited to the event selected above — an instance-scope backup rewrites data across the
+            whole install. Always run a dry run first.
+          </p>
+
+          {importError && (
+            <p role="alert" className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-[12px] font-semibold text-destructive">
+              {importError}
+            </p>
+          )}
+          {importStage === 'applied' && importSummary && (
+            <div role="status" className="mt-3 rounded-xl border border-[#16a34a]/30 bg-[#16a34a]/10 p-4 text-[12px] font-semibold text-[#16a34a] dark:text-[#22c55e]">
+              <p>Import applied.</p>
+              {importSummary.placeholderPasswordUserIds.length > 0 && (
+                <p className="mt-1 font-normal">
+                  {importSummary.placeholderPasswordUserIds.length} user(s) had no password in the file and got a
+                  placeholder — they need a real password set before they can log in.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted">
+              <Upload size={15} strokeWidth={1.8} aria-hidden="true" />
+              {importFileName ?? 'Choose file'}
+              <input
+                type="file"
+                accept="application/json"
+                onChange={(event) => onImportFileChange(event.target.files)}
+                className="hidden"
+              />
+            </label>
+            {needsForceHint && (
+              <label className="inline-flex items-center gap-2 text-[12px] font-semibold text-foreground">
+                <input
+                  type="checkbox"
+                  checked={importForce}
+                  onChange={(event) => onImportForceChange(event.target.checked)}
+                />
+                Force overwrite
+              </label>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={runDryRun}
+              disabled={importPayload === null || importStage === 'dryRunning'}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+            >
+              {importStage === 'dryRunning' ? 'Running dry run…' : 'Run dry run'}
+            </button>
+            {(importStage === 'dryRunDone' || importStage === 'applying') && (
+              <button
+                type="button"
+                onClick={applyImport}
+                disabled={importStage === 'applying'}
+                className={cn(
+                  'inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13px] font-bold text-white transition-colors disabled:opacity-60',
+                  confirmingApply ? 'bg-destructive hover:opacity-90' : 'bg-[#16a34a] hover:bg-[#15803d]',
+                )}
+              >
+                {importStage === 'applying' ? 'Applying…' : confirmingApply ? 'Confirm apply' : 'Apply'}
+              </button>
+            )}
+            {confirmingApply && (
+              <button
+                type="button"
+                onClick={() => setConfirmingApply(false)}
+                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-muted"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {importSummary && importStage !== 'applied' && (
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg border border-border bg-background p-3 text-[12px] sm:grid-cols-3">
+              {Object.entries(importSummary.counts).map(([table, count]) => (
+                <div key={table} className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">{table}</dt>
+                  <dd className="font-bold text-foreground">{count}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </section>
+      )}
+
+      <WebhooksPanel eventId={event.id} initialWebhooks={webhooks} />
 
       {isSuperadmin && (
       <section aria-label="Danger zone" className="rounded-xl border border-destructive/40 bg-card p-6">

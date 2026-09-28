@@ -1,9 +1,15 @@
 import { serialize } from 'cookie'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { z } from 'zod'
 import { AuthError, getSessionUser } from './auth-service'
+import { getUserByToken } from './token-service'
 import type { SessionUser } from './types'
+
+// Bearer-resolved identities have no session row/expiry to report — this
+// sentinel stands in for "not applicable" rather than adding an optional
+// field nothing currently reads.
+const NO_EXPIRY = new Date('9999-12-31T23:59:59.000Z')
 
 export const SESSION_COOKIE = 'dogfood_session'
 
@@ -81,10 +87,19 @@ export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Prom
   return schema.parse(body)
 }
 
+// Cookie session first (the browser path), then a Bearer API token (the
+// scripts/integrations path — src/server/token-service.ts) — both resolve to
+// the same SessionUser shape, so every existing RBAC check (getEffectiveRole,
+// role comparisons) needs no changes to support either caller.
 export async function requireSession(): Promise<SessionUser> {
   const session = await getSessionUser(await getRequestToken())
-  if (!session) throw new AuthError('UNAUTHORIZED', 401)
-  return session
+  if (session) return session
+
+  const store = await headers()
+  const user = await getUserByToken(store.get('authorization'))
+  if (user) return { user, expiresAt: NO_EXPIRY }
+
+  throw new AuthError('UNAUTHORIZED', 401)
 }
 
 export function withSessionCookie(response: NextResponse, token: string, request: Request): NextResponse {

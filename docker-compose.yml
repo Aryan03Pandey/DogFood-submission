@@ -46,7 +46,13 @@ services:
       PORT: "3000"
       APP_URL: http://localhost:3000
       SESSION_SECRET: docker-container-super-secret-key-32chars
+      SIGNING_KEY_PATH: /data/keys/ed25519.pem
+      # Must match webhook-worker's values below — see that service's
+      # comment (registration here, delivery there, independent processes).
+      WEBHOOK_ALLOWED_HOSTS: ""
+      WEBHOOK_ALLOW_PRIVATE_HOSTS: "false"
     ports: ["3000:3000"]
+    volumes: [keys:/data/keys]
 
   # One-shot boot tasks: `docker compose up` alone migrates (app entrypoint),
   # seeds, and proves the CLI — no extra commands needed. The test suite is
@@ -90,6 +96,40 @@ services:
       OFFLINE_MODE: "true"
       NODE_ENV: production
 
+  # Tier 4.5 webhook delivery worker: a long-running background process
+  # (the first one in this compose file — everything else is `app` or a
+  # one-shot command), reusing the app image rather than a second build.
+  # It only ever calls URLs an organizer explicitly registered via
+  # POST /api/events/:id/webhooks; with none registered (the default on a
+  # fresh boot) it polls an empty outbox and makes zero outbound calls,
+  # which is what keeps it OFFLINE_MODE-compatible without special-casing.
+  # Nothing depends_on it — it's fire-and-forget, and the app container's
+  # own startup must never wait on it.
+  webhook-worker:
+    build: .
+    command: ["npm", "run", "worker:webhooks"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://dogfood:dogfood@postgres:5432/dogfood
+      OFFLINE_MODE: "true"
+      NODE_ENV: production
+      # Both empty/off by default. Registration (app) and delivery
+      # (webhook-worker) each run assertSafeWebhookUrl independently in
+      # their own process — these two vars must be set identically on both
+      # services, or a host allowed at registration will still fail every
+      # delivery attempt's send-time re-check.
+      WEBHOOK_ALLOWED_HOSTS: ""
+      # Off by default, same "explicit opt-in" shape as
+      # ALLOW_DESTRUCTIVE_DB_TESTS — set to "true" only for local testing
+      # against a listener elsewhere on the compose network.
+      WEBHOOK_ALLOW_PRIVATE_HOSTS: "false"
+
 volumes:
   pgdata:
   seaweeddata:
+  keys:

@@ -6,13 +6,14 @@ const root = join(__dirname, '..', '..')
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
 
 describe('homepage hero redesign', () => {
-  it('leads with the reference copy and dual CTAs', () => {
+  it('leads with the reference copy and a single Explore CTA', () => {
     const hero = read('components/home/hero-section.tsx')
     expect(hero).toMatch(/Empowering innovators, shaping the future\./)
     expect(hero).toMatch(/Explore hackathons/)
     expect(hero).toMatch(/href="#hackathons"/)
-    expect(hero).toMatch(/Host your event/)
-    expect(hero).toMatch(/href="\/console\/events\/new"/)
+    expect(hero).not.toMatch(/Host your event/)
+    expect(hero).not.toMatch(/Rocket/)
+    expect(hero).not.toMatch(/\/console\/events\/new/)
     expect(hero).not.toMatch(/Upcoming:/)
     expect(hero).toMatch(/Artificial Intelligence/)
     expect(hero).toMatch(/Cybersecurity/)

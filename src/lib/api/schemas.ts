@@ -132,6 +132,10 @@ export const profileProjectSchema = z.object({
   hostedUrl: httpUrlSchema.nullish(),
 })
 
+export const createTokenRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+})
+
 // Every field is nullable: an incomplete profile still saves, and the
 // completion meter (not the API) marks what is missing.
 export const profileUpdateSchema = z.object({
@@ -425,6 +429,26 @@ export const eventRoleListResponseSchema = z.object({
 export const errorResponseSchema = z.object({
   error: z.string(),
 });
+
+export const tokenCreatedResponseSchema = z.object({
+  id: uuidSchema,
+  name: z.string(),
+  token: z.string(),
+  createdAt: z.string(),
+})
+
+export const tokenSummarySchema = z.object({
+  id: uuidSchema,
+  name: z.string(),
+  tokenPrefix: z.string(),
+  createdAt: z.string(),
+  lastUsedAt: z.string().nullable(),
+  revokedAt: z.string().nullable(),
+})
+
+export const tokenListResponseSchema = z.object({
+  tokens: z.array(tokenSummarySchema),
+})
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>
 export type LoginRequest = z.infer<typeof loginRequestSchema>

@@ -19,6 +19,7 @@ import {
 import { AuthError, getEffectiveRole, verifyPassword } from './auth-service'
 import { assertEventOrganizer } from './event-service'
 import { recordAuditLog } from './audit-service'
+import { enqueueWebhookEvent } from './webhook-service'
 
 // Admin-dashboard read model + organizer mutations (ADMIN-DASHBOARD.md).
 // Every function is scoped to one event; route handlers enforce the
@@ -120,9 +121,19 @@ export async function getDashboardOverview(eventId: string, now = new Date()): P
     if (activity.has(key)) activity.set(key, (activity.get(key) ?? 0) + 1)
   }
   const finals = submissionRows.filter((row) => !row.isDraft)
+  const status = deriveEventStatus(event, now)
+  // results.published has no write path to hook (PUBLISHED is purely
+  // time-derived from publicVotingEndTime, never an explicit organizer
+  // action) — detected lazily here instead, on every organizer dashboard
+  // load, which is frequent enough to not need a cron/scheduler. The
+  // partial unique index on webhook_deliveries is what actually prevents
+  // re-firing on every subsequent load once already enqueued once.
+  if (status === 'PUBLISHED') {
+    void enqueueWebhookEvent(eventId, 'results.published', { eventId }).catch(() => {})
+  }
   return {
     eventId,
-    status: deriveEventStatus(event, now),
+    status,
     totalParticipants: roleRows.length,
     totalTeams: teamRows.length,
     totalSubmissions: submissionRows.length,

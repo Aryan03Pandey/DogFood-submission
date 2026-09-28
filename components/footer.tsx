@@ -13,6 +13,10 @@ const columns = [
       { label: 'Live & Upcoming Events', href: '#hackathons' },
       { label: 'Project Gallery', href: '/projects' },
       { label: 'For Hackers', href: '#hackers' },
+      { label: 'For Organizers', href: '#organizers' },
+      { label: 'Open Console', href: '/console' },
+      { label: 'API Docs', href: '/api/docs' },
+      { label: 'Verify a signed file', href: '/verify' },
     ],
   },
   {

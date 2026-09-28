@@ -8,6 +8,15 @@ import {
   type GalleryProject,
 } from '../lib/gallery'
 
+export interface EventGalleryProject extends GalleryProject {
+  trackId: string
+}
+
+// Public gallery feed: published submissions from completed (PUBLISHED)
+// events. Draft/hidden filtering happens in SQL; the archived check applies
+// the effective phase-derived status in JS so a stale stored flag can never
+// leak an in-progress event's projects. An optional seed shuffles the order
+// (bias mitigation) instead of the default sort.
 export async function getGalleryProjects(now = new Date(), seed?: string): Promise<GalleryProject[]> {
   const rows = await db
     .select({ submission: submissions, team: teams, track: tracks, event: events })
@@ -46,6 +55,61 @@ export async function getGalleryProjects(now = new Date(), seed?: string): Promi
   }
 
   return projects.sort(sortGalleryProjects)
+}
+
+// Event-scoped feed for the embeddable widget (embed.js / app/embed/[eventId]).
+// Reuses the exact same isGalleryVisible/sortGalleryProjects rules as the
+// instance-wide feed above — there is no second visibility query, only a
+// narrower WHERE and an optional track filter for the one event being embedded.
+export async function getEventGalleryProjects(
+  eventId: string,
+  options: { track?: string; limit?: number } = {},
+  now = new Date(),
+): Promise<EventGalleryProject[] | null> {
+  const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1)
+  if (!event) return null
+
+  const rows = await db
+    .select({ submission: submissions, team: teams, track: tracks })
+    .from(submissions)
+    .innerJoin(teams, eq(submissions.teamId, teams.id))
+    .innerJoin(tracks, eq(submissions.trackId, tracks.id))
+    .where(
+      and(
+        eq(teams.eventId, eventId),
+        eq(submissions.isDraft, false),
+        eq(submissions.isHidden, false),
+        ...(options.track ? [eq(tracks.id, options.track)] : []),
+      ),
+    )
+
+  const visible = rows
+    .filter(
+      (row) =>
+        // Same guard as the instance-wide feed in getGalleryProjects: an
+        // incomplete DRAFT shell (no submissionDeadline yet) can't derive a
+        // trustworthy status and must never be listed here either.
+        event.submissionDeadline != null &&
+        isGalleryVisible({ isDraft: row.submission.isDraft, isHidden: row.submission.isHidden, event }, now),
+    )
+    .map((row) => ({
+      id: row.submission.id,
+      title: row.submission.title,
+      tagline: row.submission.tagline,
+      repoUrl: row.submission.repoUrl,
+      submittedAt: row.submission.submittedAt?.toISOString() ?? null,
+      submittedLabel: row.submission.submittedAt
+        ? formatSubmittedDate(row.submission.submittedAt.toISOString())
+        : null,
+      teamName: row.team.name,
+      trackName: row.track.name,
+      trackId: row.track.id,
+      eventTitle: event.title,
+      eventStatus: event.status,
+    }))
+    .sort(sortGalleryProjects)
+
+  return typeof options.limit === 'number' ? visible.slice(0, options.limit) : visible
 }
 
 // Public project page: one published, visible submission with everything the

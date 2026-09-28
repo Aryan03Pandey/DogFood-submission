@@ -4,7 +4,10 @@
 //   docker compose run --rm cli npm run cli -- create-user --role=admin --email=admin@local
 import 'dotenv/config'
 import { randomBytes } from 'node:crypto'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { AuthError, createUser, listUsers, normalizeRole } from '../src/server/auth-service'
+import { eventExists, exportEvent, exportInstance } from '../src/server/export-service'
+import { ImportError, importData } from '../src/server/import-service'
 import type { UserRole } from '../src/db/schema'
 
 function parseArgs(argv: string[]): { command: string; flags: Record<string, string>; rest: string[] } {
@@ -29,10 +32,28 @@ function usage(): string {
     '      Without --password a random one is generated and printed (no email exists offline).',
     '  list-users',
     '      List all users with their global roles.',
+    '  export --event=EVENT_ID --out=FILE [--include-credentials]',
+    '      Export one event (and everything referencing it) as a signed-format JSON envelope.',
+    '  backup --out=FILE [--include-credentials]',
+    '      Export the entire instance.',
+    '  import --file=FILE [--dry-run] [--force]',
+    '      Restore an export/backup file inside one transaction. --dry-run rolls back',
+    '      after validating and reports row counts. Restoring scope=instance refuses a',
+    '      non-empty instance unless --force.',
     '',
     'Examples:',
     '  docker compose run --rm cli npm run cli -- create-user --role=admin --email=admin@local',
   ].join('\n')
+}
+
+function writeExport(out: string | undefined, envelope: unknown): void {
+  if (!out) {
+    console.error('export/backup requires --out=FILE.')
+    process.exitCode = 1
+    return
+  }
+  writeFileSync(out, `${JSON.stringify(envelope, null, 2)}\n`)
+  console.log(`Wrote ${out}.`)
 }
 
 async function main(): Promise<void> {
@@ -91,11 +112,65 @@ async function main(): Promise<void> {
       return
     }
 
+    if (command === 'export') {
+      if (!flags.event) {
+        console.error('export requires --event=EVENT_ID.')
+        process.exitCode = 1
+        return
+      }
+      if (!(await eventExists(flags.event))) {
+        console.error(`No event with id "${flags.event}".`)
+        process.exitCode = 1
+        return
+      }
+      const envelope = await exportEvent(flags.event, { includeCredentials: flags['include-credentials'] !== undefined })
+      writeExport(flags.out, envelope)
+      return
+    }
+
+    if (command === 'backup') {
+      const envelope = await exportInstance({ includeCredentials: flags['include-credentials'] !== undefined })
+      writeExport(flags.out, envelope)
+      return
+    }
+
+    if (command === 'import') {
+      if (!flags.file) {
+        console.error('import requires --file=FILE.')
+        process.exitCode = 1
+        return
+      }
+      const payload = JSON.parse(readFileSync(flags.file, 'utf8'))
+      const summary = await importData(payload, {
+        dryRun: flags['dry-run'] !== undefined,
+        force: flags.force !== undefined,
+      })
+      console.log(summary.dryRun ? 'Dry run (rolled back). Row counts:' : 'Imported. Row counts:')
+      for (const [table, count] of Object.entries(summary.counts)) console.log(`  ${table}: ${count}`)
+      if (summary.placeholderPasswordUserIds.length > 0) {
+        console.log(
+          `\n${summary.placeholderPasswordUserIds.length} user(s) had no password_hash in the file and were ` +
+            'given a shared, unusable placeholder — they need a real password set via the API or ' +
+            '`dogfood-cli` before they can log in:',
+        )
+        for (const id of summary.placeholderPasswordUserIds) console.log(`  ${id}`)
+      }
+      return
+    }
+
     console.error(`Unknown command "${command}".\n\n${usage()}`)
     process.exitCode = 1
   } catch (error) {
     if (error instanceof AuthError && error.code === 'EMAIL_TAKEN') {
       console.error('That email is already registered.')
+      process.exitCode = 1
+      return
+    }
+    if (error instanceof ImportError && error.code === 'INSTANCE_NOT_EMPTY') {
+      console.error(
+        'Refusing to restore scope=instance: this instance already has data beyond the seed/fixtures. ' +
+          'Pass --force to overwrite it anyway.',
+      )
       process.exitCode = 1
       return
     }

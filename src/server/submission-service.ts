@@ -13,6 +13,7 @@ import {
 } from "../db/schema";
 import { AuthError, getEventRole, verifyPassword } from "./auth-service";
 import { getEventRow } from "./event-service";
+import { enqueueWebhookEvent } from "./webhook-service";
 import { hashInviteToken } from "../lib/auth";
 import { inviteExpiryFrom } from "../lib/teams";
 import {
@@ -242,6 +243,11 @@ export async function createDraft(
     .insert(submissions)
     .values({ teamId, trackId: input.trackId ?? null, title: "Untitled project" })
     .returning();
+  await enqueueWebhookEvent(eventId, "submission.created", {
+    submissionId: row.id,
+    teamId,
+    title: row.title,
+  });
   const summary = serialize(row, inputTrackName, actor.id, role);
   summary.eventId = eventId;
   return summary;

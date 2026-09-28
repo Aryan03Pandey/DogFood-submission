@@ -4,25 +4,40 @@ import { redirect } from 'next/navigation'
 import { KeyRound, Monitor, Pencil, UserRound } from 'lucide-react'
 
 import { getSessionUser } from '@/src/server/auth-service'
+import { listTokens } from '@/src/server/token-service'
 import LogoutButton from '@/components/auth/logout-button'
 import ThemeToggle from '@/components/theme-toggle'
 import { PasswordForm } from '@/components/account/password-form'
+import { ApiTokensPanel } from '@/components/settings/api-tokens-panel'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Account Settings | Dogfood 2026',
-  description: 'Manage your account, security, and appearance.',
+  description: 'Manage your account, security, appearance, and API tokens.',
 }
 
-// Account settings: identity summary, password rotation, appearance, and
-// session sign-out. Profile field editing stays on /profile; this page is
-// the account-level surface the avatar menu points at.
+// Account settings: identity summary, password rotation, appearance,
+// API tokens, and session sign-out. Session-gated like the console
+// (app/console/page.tsx) — resolve identity server-side, fetch initial
+// data server-side, pass it down as plain props. No client-side session
+// fetch. Profile field editing stays on /profile; this page is the
+// account-level surface the avatar menu points at.
 export default async function SettingsPage() {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session?.user) redirect('/login')
   const user = session.user
+
+  const rows = await listTokens(session.user.id)
+  const initialTokens = rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    tokenPrefix: row.tokenPrefix,
+    createdAt: row.createdAt.toISOString(),
+    lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
+    revokedAt: row.revokedAt?.toISOString() ?? null,
+  }))
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-12">
@@ -92,6 +107,17 @@ export default async function SettingsPage() {
           </div>
         </section>
       </div>
+
+      <section aria-label="API tokens" className="mt-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-[15px] font-bold text-foreground">API tokens</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          Bearer tokens for scripts and integrations — they carry the same permissions as your
+          account, wherever you use them.
+        </p>
+        <div className="mt-4">
+          <ApiTokensPanel initialTokens={initialTokens} />
+        </div>
+      </section>
     </main>
   )
 }

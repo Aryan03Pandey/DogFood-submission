@@ -1,24 +1,50 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { ApiError, apiSetSubmissionHidden, type DashboardGalleryItemPayload } from '@/lib/api-client'
 
-// Gallery tab: every project for the event with a hide-from-gallery toggle.
-// The public gallery keeps filtering on isHidden, so hiding takes effect
-// there immediately.
+// Gallery tab: every project for the event with a hide-from-gallery toggle,
+// plus an embed snippet + live preview. The public gallery keeps filtering
+// on isHidden, so hiding takes effect there immediately.
 export function GalleryPanel({
   eventId,
   initialItems,
+  eventStatus,
+  publicBaseUrl,
 }: {
   eventId: string
   initialItems: DashboardGalleryItemPayload[]
+  // Effective status (already phase-derived by serializeEvent) — the embed
+  // shows real projects only once this is PUBLISHED; earlier phases would
+  // just render an empty, confusing-looking iframe (src/lib/gallery.ts's
+  // isGalleryVisible gates on the same PUBLISHED check).
+  eventStatus: string
+  // Resolved server-side (PUBLIC_BASE_URL, falling back to the request's own
+  // host) — never window.location.origin, which would point at whatever
+  // port/proxy the admin happens to be browsing through.
+  publicBaseUrl: string
 }) {
   const [items, setItems] = useState(initialItems)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [copied, setCopied] = useState(false)
+
+  const snippet = `<script src="${publicBaseUrl}/embed.js" data-event="${eventId}" data-theme="${theme}" async></script>`
+  const isLive = eventStatus === 'PUBLISHED'
+
+  async function copySnippet() {
+    try {
+      await navigator.clipboard.writeText(snippet)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   async function toggle(item: DashboardGalleryItemPayload) {
     if (pendingId) return
@@ -101,6 +127,60 @@ export function GalleryPanel({
           </tbody>
         </table>
       </div>
+
+      <section aria-label="Embed" className="rounded-xl border border-border bg-card p-6">
+        <h3 className="text-[15px] font-bold text-foreground">Embed on your site</h3>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          Paste this snippet anywhere on an external page to show a live, read-only copy of this
+          gallery.
+        </p>
+
+        <div className="mt-3 flex items-center gap-2">
+          <label htmlFor={`embed-theme-${eventId}`} className="text-[12px] font-bold text-foreground">
+            Theme
+          </label>
+          <select
+            id={`embed-theme-${eventId}`}
+            value={theme}
+            onChange={(event) => setTheme(event.target.value as 'light' | 'dark')}
+            className="h-9 rounded-lg border border-border bg-background px-3 text-[13px] font-semibold text-foreground outline-none focus:border-[#16a34a]"
+          >
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+
+        <div className="mt-3 flex items-start gap-2">
+          <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-border bg-background px-3 py-2 text-[12px] text-foreground">
+            <code>{snippet}</code>
+          </pre>
+          <button
+            type="button"
+            onClick={copySnippet}
+            aria-label="Copy embed snippet"
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-[12px] font-bold text-foreground transition-colors hover:bg-muted"
+          >
+            {copied ? <Check size={14} strokeWidth={2} aria-hidden="true" /> : <Copy size={14} strokeWidth={1.8} aria-hidden="true" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+
+        <div className="mt-4">
+          {isLive ? (
+            <iframe
+              src={`${publicBaseUrl}/embed/${eventId}?theme=${theme}`}
+              title="Gallery embed preview"
+              className="h-[420px] w-full rounded-lg border border-border"
+            />
+          ) : (
+            <p className="rounded-lg border border-border bg-muted p-4 text-[12px] font-semibold text-muted-foreground">
+              Your embed goes live once submissions close and results publish. The snippet above
+              is ready to paste now — it will start showing projects automatically once that
+              happens.
+            </p>
+          )}
+        </div>
+      </section>
     </div>
   )
 }
