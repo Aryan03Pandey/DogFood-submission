@@ -104,6 +104,25 @@ export async function findUserByEmail(email: string): Promise<DbUser | null> {
   return user ?? null
 }
 
+// Password rotation from Account Settings: proves the current password,
+// then stores the new hash. New-password strength is enforced by the route
+// schema (passwordSchema), so this only gates on the credential replaced.
+export async function changePassword(
+  actor: DbUser,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const [user] = await db.select().from(users).where(eq(users.id, actor.id)).limit(1)
+  if (!user) throw new AuthError('NOT_FOUND', 404)
+  if (!(await verifyPassword(user.passwordHash, currentPassword))) {
+    throw new AuthError('INVALID_CREDENTIALS', 401)
+  }
+  await db
+    .update(users)
+    .set({ passwordHash: await hashPassword(newPassword) })
+    .where(eq(users.id, actor.id))
+}
+
 // Server-only user listing for dogfood-cli (scripts/cli.ts). This is NOT an
 // HTTP endpoint — there is deliberately no /api/users route, so no caller
 // over the network can enumerate accounts. The result is intentionally
@@ -194,10 +213,15 @@ export async function assignEventRole(input: AssignEventRoleInput) {
   const actorRole = await getEffectiveRole(input.actor, input.eventId)
   if (!canAssignEventRole(actorRole, input.role)) throw new AuthError('FORBIDDEN', 403)
   const [existing] = await db
-    .select({ id: eventRoles.id })
+    .select({ id: eventRoles.id, role: eventRoles.role })
     .from(eventRoles)
     .where(and(eq(eventRoles.eventId, input.eventId), eq(eventRoles.userId, input.targetUserId)))
     .limit(1)
+  // Participants cannot be lifted onto the organizers team: staffing and
+  // hacking are mutually exclusive.
+  if (input.role === 'ORGANIZER' && existing?.role === 'PARTICIPANT') {
+    throw new AuthError('FORBIDDEN', 403)
+  }
   if (existing) {
     const [updated] = await db
       .update(eventRoles)

@@ -1,0 +1,165 @@
+erDiagram
+        USERS {
+            uuid id PK
+            text email "unique, not null"
+            text name "nullable"
+            text password_hash "not null"
+            text role "SUPERADMIN|ORGANIZER|JUDGE|PARTICIPANT"
+            text organization "nullable"
+            timestamptz created_at
+        }
+        SESSIONS {
+            text id PK
+            uuid user_id FK "not null, cascade"
+            timestamptz expires_at
+            timestamptz created_at
+        }
+        EVENTS {
+            uuid id PK
+            text title
+            text slug "unique"
+            text status "DRAFT|REGISTRATION|SUBMISSION|JUDGING|PUBLIC_VOTING|ARCHIVED"
+            timestamptz start_time
+            timestamptz registration_start "nullable"
+            timestamptz registration_end "nullable"
+            timestamptz submission_start "nullable"
+            timestamptz submission_deadline
+            timestamptz judging_start "nullable"
+            timestamptz judging_end_time
+            timestamptz public_voting_start "nullable"
+            timestamptz public_voting_end_time
+            timestamptz created_at
+        }
+        EVENT_ROLES {
+            uuid id PK
+            uuid event_id FK "cascade"
+            uuid user_id FK "cascade"
+            text role "ORGANIZER|JUDGE|PARTICIPANT"
+            timestamptz created_at
+        }
+        TRACKS {
+            uuid id PK
+            uuid event_id FK "cascade"
+            text name
+            text description "nullable"
+            jsonb eligibility_rules
+        }
+        PRIZES {
+            uuid id PK
+            uuid event_id FK "cascade"
+            uuid track_id FK "nullable"
+            text title
+            int cash_value
+        }
+        TEAMS {
+            uuid id PK
+            uuid event_id FK "cascade"
+            text name
+            text invite_code_hash
+            boolean is_locked
+            timestamptz created_at
+        }
+        TEAM_MEMBERS {
+            uuid id PK
+            uuid team_id FK "cascade"
+            uuid user_id FK "cascade"
+            text role "LEADER|MEMBER"
+            timestamptz joined_at
+        }
+        SUBMISSIONS {
+            uuid id PK
+            uuid team_id FK "cascade"
+            uuid track_id FK
+            text title
+            text tagline "nullable"
+            text description "nullable"
+            jsonb tech_stack
+            text repo_url "nullable"
+            text demo_url "nullable"
+            jsonb asset_keys
+            boolean is_draft
+            boolean is_hidden
+            timestamptz submitted_at "nullable"
+            timestamptz updated_at
+        }
+        RUBRICS {
+            uuid id PK
+            uuid event_id FK "cascade"
+            text title
+            jsonb criteria_json
+        }
+        JUDGE_TRACKS {
+            uuid id PK
+            uuid track_id FK "cascade"
+            uuid judge_id FK "cascade"
+        }
+        JUDGE_ASSIGNMENTS {
+            uuid id PK
+            uuid event_id FK "cascade"
+            uuid judge_id FK
+            uuid submission_id FK "cascade"
+            text status
+        }
+        SCORES {
+            uuid id PK
+            uuid assignment_id FK "cascade"
+            uuid judge_id FK
+            uuid submission_id FK
+            jsonb rubric_scores_json
+            float raw_total
+            text comment "nullable"
+            timestamptz submitted_at
+        }
+        PAIRWISE_COMPARISONS {
+            uuid id PK
+            uuid event_id FK
+            uuid judge_id FK
+            uuid winner_submission_id FK
+            uuid loser_submission_id FK
+            timestamptz created_at
+        }
+        VOTES {
+            uuid id PK
+            uuid event_id FK
+            text voter_fingerprint
+            uuid submission_id FK
+            int vote_weight
+            timestamptz created_at
+        }
+        AUDIT_LOGS {
+            uuid id PK
+            uuid actor_id FK "nullable"
+            text action
+            text entity_type
+            uuid entity_id "nullable"
+            jsonb payload_json "nullable"
+            timestamptz created_at
+        }
+
+        USERS ||--o{ SESSIONS : "has"
+        USERS ||--o{ TEAM_MEMBERS : "joins via"
+        USERS ||--o{ EVENT_ROLES : "scoped to event"
+        USERS ||--o{ JUDGE_TRACKS : "qualified as judge"
+        USERS ||--o{ JUDGE_ASSIGNMENTS : "reviews as judge"
+        USERS ||--o{ SCORES : "awards"
+        USERS ||--o{ PAIRWISE_COMPARISONS : "compares as judge"
+        USERS ||--o{ AUDIT_LOGS : "acts"
+        EVENTS ||--o{ TRACKS : "defines"
+        EVENTS ||--o{ PRIZES : "offers"
+        EVENTS ||--o{ TEAMS : "hosts"
+        EVENTS ||--o{ EVENT_ROLES : "grants"
+        EVENTS ||--o{ RUBRICS : "judged by"
+        EVENTS ||--o{ JUDGE_ASSIGNMENTS : "creates"
+        EVENTS ||--o{ PAIRWISE_COMPARISONS : "collects"
+        EVENTS ||--o{ VOTES : "collects"
+        TRACKS ||--o{ PRIZES : "optionally funds"
+        TRACKS ||--o{ SUBMISSIONS : "categorizes"
+        TRACKS ||--o{ JUDGE_TRACKS : "needs expertise in"
+        TEAMS ||--o{ TEAM_MEMBERS : "rostered as"
+        TEAMS ||--o{ SUBMISSIONS : "submits"
+        SUBMISSIONS ||--o{ JUDGE_ASSIGNMENTS : "assigned to judges"
+        SUBMISSIONS ||--o{ SCORES : "receives"
+        SUBMISSIONS ||--o{ VOTES : "receives"
+        SUBMISSIONS ||--o{ PAIRWISE_COMPARISONS : "wins"
+        SUBMISSIONS ||--o{ PAIRWISE_COMPARISONS : "loses"
+        JUDGE_ASSIGNMENTS ||--o{ SCORES : "scored by"

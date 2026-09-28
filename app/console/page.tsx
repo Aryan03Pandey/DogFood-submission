@@ -2,6 +2,8 @@ import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
 import Link from 'next/link'
+import { Pencil } from 'lucide-react'
+import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
 import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
 import {
   getDashboardOverview,
@@ -11,7 +13,7 @@ import {
   listDashboardSubmissionsPage,
   listEventMembers,
 } from '@/src/server/dashboard-service'
-import { getEvent, listEvents, serializeEvent } from '@/src/server/event-service'
+import { getEvent, listManagedEvents, serializeEvent } from '@/src/server/event-service'
 import {
   getAssignmentProgress,
   getEventJudges,
@@ -57,7 +59,7 @@ export default async function ConsolePage({
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
 
-  const allEvents = await listEvents(session.user)
+  const allEvents = await listManagedEvents(session.user)
   const manageable = allEvents.map(serializeEvent)
 
   const selectedId = eventId ?? null
@@ -150,9 +152,18 @@ export default async function ConsolePage({
             </div>
           ) : (
             <>
-              <p className="mb-1 text-[11px] font-semibold text-muted-foreground">
-                Events / <span className="text-foreground">{event.title}</span>
-              </p>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <p className="mr-auto text-[11px] font-semibold text-muted-foreground">
+                  Events / <span className="text-foreground">{event.title}</span>
+                </p>
+                <Link
+                  href={`/console/events/${event.id}/edit`}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#16a34a] px-4 text-[13px] font-bold text-white transition-colors hover:bg-[#15803d]"
+                >
+                  <Pencil size={14} strokeWidth={1.8} aria-hidden="true" /> Edit event
+                </Link>
+                <GoLiveControl eventId={event.id} isDraft={event.status === 'DRAFT'} />
+              </div>
               {tab === 'overview' && <OverviewPanel overview={overview} event={event} />}
               {tab === 'participants' && (
                 <ParticipantsPanel eventId={event.id} rows={await listDashboardParticipants(event.id)} />

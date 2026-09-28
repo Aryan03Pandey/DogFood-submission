@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, startOfDay } from 'date-fns'
 import { CalendarDays } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -75,7 +75,13 @@ export function DateTimeField({
             {current && !Number.isNaN(current.getTime()) ? format(current, 'PPP') : 'Pick a date'}
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={current} onSelect={pickDate} autoFocus />
+            <Calendar
+              mode="single"
+              selected={current}
+              onSelect={pickDate}
+              autoFocus
+              disabled={{ before: startOfDay(new Date()) }}
+            />
           </PopoverContent>
         </Popover>
         <input

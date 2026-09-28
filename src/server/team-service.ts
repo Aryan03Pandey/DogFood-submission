@@ -341,6 +341,12 @@ export async function leaveTeam(
     const next = successors[0]
     if (!next) {
       await tx.delete(teams).where(eq(teams.id, teamId))
+      // Last member out: the team is gone, so the registration goes with
+      // it. Otherwise the event page keeps seeing a registered viewer with
+      // no team and offers "Manage Team" instead of "Register".
+      await tx
+        .delete(eventRoles)
+        .where(and(eq(eventRoles.eventId, event.id), eq(eventRoles.userId, actor.id)))
       return { transferredTo: null, deleted: true }
     }
     await tx

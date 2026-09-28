@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { classifyEventTab, isShowcaseEvent } from '../../src/lib/hackathons'
 import { isActiveNavItem } from '../../src/lib/nav'
@@ -17,6 +19,24 @@ describe('hackathon tabs', () => {
     expect(classifyEventTab('JUDGING')).toBe('past')
     expect(classifyEventTab('PUBLIC_VOTING')).toBe('past')
     expect(classifyEventTab('PUBLISHED')).toBe('past')
+  })
+})
+
+describe('hackathon tab bar position', () => {
+  it('pins the tablist below the navbar so the buttons never scroll away', () => {
+    const tabs = readFileSync(join(__dirname, '..', '..', 'components/hackathon-tabs.tsx'), 'utf8')
+    expect(tabs).toMatch(/sticky top-16/)
+    // Active and inactive pills share one geometry: no border/size switch.
+    expect(tabs).toMatch(/inline-flex h-9 items-center gap-2 rounded-lg px-4/)
+    expect(tabs).not.toMatch(/border-2|border-\[/)
+  })
+})
+
+describe('draft visibility', () => {
+  it('excludes DRAFT events from the public listing service', () => {
+    const svc = readFileSync(join(__dirname, '..', '..', 'src/server/hackathons-service.ts'), 'utf8')
+    expect(svc).toMatch(/DRAFT/)
+    expect(svc).toMatch(/status === 'DRAFT'/)
   })
 })
 

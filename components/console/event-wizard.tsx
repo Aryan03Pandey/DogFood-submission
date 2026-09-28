@@ -263,7 +263,9 @@ export function EventWizard({
     if (data.eventId) return data.eventId
     const problems = validateBasics(data)
     if (problems.length > 0) {
-      setStepErrors(problems)
+      // Guide, don't scold: jump to basics with a clean slate. The errors
+      // appear when the user tries to continue or save from there.
+      setStepErrors([])
       setStepIndex(WIZARD_STEPS.findIndex((entry) => entry.id === 'basics'))
       return null
     }

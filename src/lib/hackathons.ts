@@ -40,4 +40,7 @@ export interface HackathonEvent {
   dateLabel: string
   // Registration end, ISO string: sort key for the listing only.
   sortKey: string
+  // Organizer-uploaded card banner for the listing cards; null renders a
+  // themed fallback block instead.
+  cardBannerUrl: string | null
 }

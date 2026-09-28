@@ -104,6 +104,17 @@ export function emptyWizard(): WizardData {
   }
 }
 
+// Slug derivation for the basics step: the slug fills itself in from the
+// title, so organizers never type it. Manual tweaks survive until the shell
+// exists; afterwards the slug locks as the stable public identifier.
+export function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120)
+}
+
 export function validateBasics(data: Pick<WizardData, 'title' | 'slug'>): string[] {
   const errors: string[] = []
   if (data.title.trim() === '') errors.push('Title is required.')
@@ -215,7 +226,7 @@ export function validatePrizes(
   data: Pick<WizardData, 'tiers' | 'participationCertificate' | 'acknowledged'>,
 ): string[] {
   const errors: string[] = []
-  if (data.tiers.length === 0) errors.push('Add at least one prize tier.')
+  // Prizes are optional: an event may run with no prize tiers at all.
   for (const tier of data.tiers) errors.push(...validateTier(tier))
   if (!data.acknowledged) {
     errors.push('Confirm you understand prizes and certificate settings lock once the event goes live.')

@@ -16,7 +16,11 @@ export default function HackathonTabs({ events }: { events: HackathonEvent[] }) 
 
   return (
     <div className="mt-6">
-      <div role="tablist" aria-label="Filter hackathons" className="flex w-fit gap-1 rounded-lg bg-muted p-1">
+      <div
+        role="tablist"
+        aria-label="Filter hackathons"
+        className="sticky top-16 z-10 flex w-fit gap-1 rounded-lg bg-muted p-1"
+      >
         {HACKATHON_TABS.map((entry) => {
           const count = events.filter((event) => event.tab === entry.id).length
           const active = entry.id === tab

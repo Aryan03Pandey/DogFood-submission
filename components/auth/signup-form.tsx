@@ -13,7 +13,7 @@ import {
 const STRENGTH_STYLES: Record<PasswordStrength, { bar: string; label: string }> = {
   Weak: { bar: 'bg-[#c04545]', label: 'text-[#c04545]' },
   Medium: { bar: 'bg-[#d9930d]', label: 'text-[#9a6b0a]' },
-  Strong: { bar: 'bg-[#2f9e5f]', label: 'text-[#237a48]' },
+  Strong: { bar: 'bg-[#2f9e5f]', label: 'text-[#16a34a] dark:text-[#22c55e]' },
 }
 
 export default function SignupForm() {
@@ -66,16 +66,16 @@ export default function SignupForm() {
   }
 
   const inputClass =
-    'h-10 rounded-lg border border-[#e6e7ec] bg-[#fbfbfc] px-3 text-[13px] font-normal outline-none placeholder:text-[#b5b7bf] focus:border-[#aaa5ee]'
+    'h-10 rounded-lg border border-border bg-background px-3 text-[13px] font-normal outline-none placeholder:text-muted-foreground focus:border-[#16a34a]'
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f8fb] px-4">
-      <div className="w-full max-w-95 rounded-xl border border-[#e8e9ee] bg-white p-8">
-        <p className="text-[15px] font-bold tracking-[-0.02em]">dogfood</p>
-        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.03em] text-[#20222b]">Sign up</h1>
-        <p className="mt-1 text-[12px] text-[#858894]">Offline-first hackathon console.</p>
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-95 rounded-xl border border-border bg-card p-8">
+        <p className="text-[15px] font-bold tracking-[-0.02em] text-foreground">RaptorHack<span className="text-[#16a34a] dark:text-[#22c55e]">.</span></p>
+        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.03em] text-foreground">Sign up</h1>
+        <p className="mt-1 text-[12px] text-muted-foreground">Offline-first hackathon console.</p>
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#464956]">
+          <label className="flex flex-col gap-1 text-[12px] font-semibold text-foreground">
             Email
             <input
               type="email"
@@ -87,7 +87,7 @@ export default function SignupForm() {
               className={inputClass}
             />
           </label>
-          <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#464956]">
+          <label className="flex flex-col gap-1 text-[12px] font-semibold text-foreground">
             Password
             <span className="relative flex">
               <input
@@ -105,7 +105,7 @@ export default function SignupForm() {
                 onClick={() => setShowPassword(!showPassword)}
                 aria-pressed={showPassword}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#b5b7bf] transition-colors hover:bg-[#f1f2f5] hover:text-[#464956]"
+                className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#b5b7bf] transition-colors hover:bg-[#f1f2f5] hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -117,7 +117,7 @@ export default function SignupForm() {
           </label>
           {password.length > 0 && (
             <div id="password-strength" className="flex items-center gap-2" aria-live="polite">
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eef0f4]">
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <span
                   className={`block h-full rounded-full transition-all ${strengthStyle.bar} ${
                     strength === 'Weak' ? 'w-1/3' : strength === 'Medium' ? 'w-2/3' : 'w-full'
@@ -133,14 +133,14 @@ export default function SignupForm() {
               return (
                 <li
                   key={rule.id}
-                  className={`text-[11px] font-semibold ${met ? 'text-[#237a48]' : 'text-[#999ca7]'}`}
+                  className={`text-[11px] font-semibold ${met ? 'text-[#16a34a] dark:text-[#22c55e]' : 'text-muted-foreground'}`}
                 >
                   {met ? '✓' : '○'} {rule.label}
                 </li>
               )
             })}
           </ul>
-          <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#464956]">
+          <label className="flex flex-col gap-1 text-[12px] font-semibold text-foreground">
             Confirm password
             <input
               type="password"
@@ -158,7 +158,7 @@ export default function SignupForm() {
             </p>
           )}
           {error && (
-            <p className="rounded-lg bg-[#fdf0f0] px-3 py-2 text-[12px] font-semibold text-[#c04545]">
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-[12px] font-semibold text-destructive">
               {error}
             </p>
           )}
@@ -166,14 +166,14 @@ export default function SignupForm() {
             type="submit"
             disabled={pending || !canSubmit}
             title={!canSubmit ? 'Fill every field, meet all password rules, and match both passwords.' : undefined}
-            className="mt-1 inline-flex h-10 items-center justify-center rounded-lg bg-[#635bdb] text-[13px] font-bold text-white hover:bg-[#574fcc] disabled:opacity-60"
+            className="mt-1 inline-flex h-10 items-center justify-center rounded-lg bg-[#16a34a] text-[13px] font-bold text-white hover:bg-[#15803d] disabled:opacity-60"
           >
             {pending ? 'Signing up…' : 'Sign up'}
           </button>
         </form>
-        <p className="mt-4 text-[11px] leading-5 text-[#999ca7]">
+        <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
           Already have an account?{' '}
-          <a href="/login" className="font-semibold text-[#635bdb]">
+          <a href="/login" className="font-semibold text-[#16a34a] dark:text-[#22c55e]">
             Log in
           </a>
         </p>

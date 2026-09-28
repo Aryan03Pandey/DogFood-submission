@@ -13,18 +13,22 @@ export default async function ActiveHackathons() {
   const events = (await getHackathonEvents()).filter((event) => isShowcaseEvent(event.tab))
 
   return (
-    <section id="hackathons" aria-label="Live and upcoming events" className="bg-background">
+    <section id="hackathons" aria-label="Live and upcoming events">
       <div className="mx-auto max-w-5xl scroll-mt-20 px-5 py-12 md:py-16">
-        <h2 className="text-center text-[22px] font-bold tracking-[-0.02em] text-foreground">
+        <div
+          className="mx-auto mb-8 h-px max-w-xs bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent"
+          aria-hidden="true"
+        />
+        <h2 className="text-center text-[28px] font-bold tracking-[-0.02em] text-foreground">
           Live &amp; Upcoming Events
         </h2>
-        <p className="mt-2 text-center text-[13px] text-muted-foreground">
+        <p className="mt-2 text-center text-[14px] text-muted-foreground">
           {events.length === 0
             ? 'No live or upcoming events right now — check back soon.'
             : `${events.length} ${events.length === 1 ? 'event' : 'events'} accepting hackers right now.`}
         </p>
         {events.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
             {events.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

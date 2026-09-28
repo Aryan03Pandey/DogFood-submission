@@ -48,11 +48,15 @@ export function ManageTeam({
   const [copied, setCopied] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(initial.team.name)
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // One pending destructive/intent action at a time: opening one confirm
+  // closes any other, so cancel and submit can never overlap on screen.
+  const [confirming, setConfirming] = useState<'submit' | 'cancel' | 'leave' | null>(null)
   const [password, setPassword] = useState('')
-  const [confirmingSubmit, setConfirmingSubmit] = useState(false)
   const [submitPassword, setSubmitPassword] = useState('')
   const [working, setWorking] = useState(false)
+  // Which action is in flight: pending labels stay on their own button, so
+  // renaming no longer flashes the invite-code generator.
+  const [workingLabel, setWorkingLabel] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -71,6 +75,7 @@ export function ManageTeam({
   async function run(label: string, fn: () => Promise<TeamSummaryPayload | void>) {
     if (working) return
     setWorking(true)
+    setWorkingLabel(label)
     setError(null)
     setNotice(null)
     try {
@@ -81,6 +86,7 @@ export function ManageTeam({
       setError(actionError(err, `${label} failed. Try again.`))
     } finally {
       setWorking(false)
+      setWorkingLabel(null)
     }
   }
 
@@ -148,7 +154,7 @@ export function ManageTeam({
               disabled={working || name.trim() === ''}
               className="inline-flex h-10 shrink-0 items-center rounded-lg bg-[#16a34a] px-4 text-[13px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:opacity-60"
             >
-              Save
+              {workingLabel === 'Rename' ? 'Saving…' : 'Save'}
             </button>
           </form>
         ) : (
@@ -206,7 +212,7 @@ export function ManageTeam({
                 className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-[#16a34a] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:opacity-60"
               >
                 <RefreshCw size={15} strokeWidth={1.8} aria-hidden="true" />
-                {working ? 'Generating…' : 'Generate new invite code'}
+                {workingLabel === 'Rotation' ? 'Generating…' : 'Generate new invite code'}
               </button>
             </div>
           ) : freshToken ? (
@@ -253,7 +259,7 @@ export function ManageTeam({
                 className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg border border-border px-5 text-[13px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
               >
                 <RefreshCw size={15} strokeWidth={1.8} aria-hidden="true" />
-                {working ? 'Generating…' : 'Generate new invite code'}
+                {workingLabel === 'Rotation' ? 'Generating…' : 'Generate new invite code'}
               </button>
             </div>
           )}
@@ -283,31 +289,60 @@ export function ManageTeam({
                 </span>
               </span>
               {member.isSelf ? (
-                <button
-                  type="button"
-                  disabled={working || frozen}
-                  title={frozen ? 'Roster locked' : isLeader ? 'Leaving transfers ownership' : 'Leave team'}
-                  onClick={() =>
-                    run('Leave', async () => {
-                      const result = await apiLeaveTeam(eventId, team.id)
-                      if (result.deleted) {
-                        router.push(`/hackathons/${slug}`)
-                        router.refresh()
-                        return undefined
+                confirming !== 'leave' ? (
+                  <button
+                    type="button"
+                    disabled={working || frozen}
+                    title={frozen ? 'Roster locked' : isLeader ? 'Leaving transfers ownership' : 'Leave team'}
+                    onClick={() => setConfirming('leave')}
+                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+                  >
+                    Leave
+                  </button>
+                ) : (
+                  <span className="flex shrink-0 flex-wrap items-center gap-1.5">
+                    <span className="basis-full text-[11px] font-semibold text-destructive">
+                      {size === 1
+                        ? 'You are the last member — leaving deletes the team and unregisters you.'
+                        : isLeader
+                          ? 'Leaving transfers captaincy to the longest-tenured teammate.'
+                          : 'You will leave the team but stay registered.'}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={working}
+                      onClick={() =>
+                        run('Leave', async () => {
+                          const result = await apiLeaveTeam(eventId, team.id)
+                          setConfirming(null)
+                          if (result.deleted) {
+                            router.push(`/hackathons/${slug}`)
+                            router.refresh()
+                            return undefined
+                          }
+                          setNotice(
+                            result.transferredTo
+                              ? 'Ownership transferred to the longest-tenured teammate.'
+                              : 'You left the team.',
+                          )
+                          await refresh()
+                          return undefined
+                        })
                       }
-                      setNotice(
-                        result.transferredTo
-                          ? 'Ownership transferred to the longest-tenured teammate.'
-                          : 'You left the team.',
-                      )
-                      await refresh()
-                      return undefined
-                    })
-                  }
-                  className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                >
-                  Leave
-                </button>
+                      className="rounded-lg bg-destructive px-3 py-1.5 text-[12px] font-bold text-white transition-colors hover:opacity-90 disabled:opacity-60"
+                    >
+                      {workingLabel === 'Leave' ? 'Leaving…' : 'Confirm leave'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={working}
+                      onClick={() => setConfirming(null)}
+                      className="rounded-lg border border-border px-3 py-1.5 text-[12px] font-bold text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+                    >
+                      Stay
+                    </button>
+                  </span>
+                )
               ) : (
                 isLeader &&
                 !frozen && (
@@ -351,10 +386,10 @@ export function ManageTeam({
       <div className="flex flex-wrap items-center gap-2">
         {!submitted &&
           isLeader &&
-          (!confirmingSubmit ? (
+          (confirming !== 'submit' ? (
             <button
               type="button"
-              onClick={() => setConfirmingSubmit(true)}
+              onClick={() => setConfirming('submit')}
               className="inline-flex h-10 items-center rounded-lg bg-[#16a34a] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#15803d]"
             >
               Submit Team
@@ -366,7 +401,7 @@ export function ManageTeam({
                 if (submitPassword === '' || working) return
                 run('Submit', async () => {
                   const { team: next } = await apiSubmitTeam(eventId, team.id, submitPassword)
-                  setConfirmingSubmit(false)
+                  setConfirming(null)
                   setSubmitPassword('')
                   setNotice('Team submitted. The roster is now locked and read-only.')
                   return next
@@ -395,12 +430,12 @@ export function ManageTeam({
                 disabled={working || submitPassword === ''}
                 className="inline-flex h-10 items-center rounded-lg bg-[#16a34a] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#15803d] disabled:opacity-60"
               >
-                {working ? 'Submitting…' : 'Confirm submit'}
+                {workingLabel === 'Submit' ? 'Submitting…' : 'Confirm submit'}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setConfirmingSubmit(false)
+                  setConfirming(null)
                   setSubmitPassword('')
                 }}
                 disabled={working}
@@ -411,10 +446,10 @@ export function ManageTeam({
             </form>
           ))}
         {isLeader && (!frozen || submitted) &&
-          (!confirmingDelete ? (
+          (confirming !== 'cancel' ? (
             <button
               type="button"
-              onClick={() => setConfirmingDelete(true)}
+              onClick={() => setConfirming('cancel')}
               className="inline-flex h-10 items-center gap-2 rounded-lg border border-destructive/40 px-5 text-[13px] font-bold text-destructive transition-colors hover:bg-destructive/10"
             >
               <Trash2 size={15} strokeWidth={1.8} aria-hidden="true" /> Cancel Team
@@ -454,12 +489,12 @@ export function ManageTeam({
                 disabled={working || password === ''}
                 className="inline-flex h-10 items-center gap-2 rounded-lg bg-destructive px-5 text-[13px] font-bold text-white transition-colors hover:opacity-90 disabled:opacity-60"
               >
-                {working ? 'Deleting…' : 'Confirm cancel'}
+                {workingLabel === 'Delete' ? 'Deleting…' : 'Confirm cancel'}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setConfirmingDelete(false)
+                  setConfirming(null)
                   setPassword('')
                 }}
                 disabled={working}

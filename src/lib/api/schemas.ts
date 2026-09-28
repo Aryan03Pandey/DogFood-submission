@@ -37,6 +37,11 @@ export const loginRequestSchema = z.object({
   password: z.string().min(1).max(256),
 });
 
+export const changePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1).max(256),
+  newPassword: passwordSchema,
+});
+
 export const impersonateRequestSchema = z.object({
   email: emailSchema,
 });

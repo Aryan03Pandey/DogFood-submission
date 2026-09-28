@@ -9,8 +9,8 @@ export interface MenuItem {
 export const ACCOUNT_MENU_GROUPS: MenuItem[][] = [
   [{ label: 'Edit Profile', href: '/profile' }],
   [
-    { label: 'My Hackathons', href: '/hackathons' },
-    { label: 'My Projects', href: '/projects' },
+    { label: 'My Hackathons', href: '/my-hackathons' },
+    { label: 'My Projects', href: '/my-projects' },
     { label: 'Judge Dashboard', href: '/judge' },
   ],
   [{ label: 'Organizer Dashboard', href: '/console' }],

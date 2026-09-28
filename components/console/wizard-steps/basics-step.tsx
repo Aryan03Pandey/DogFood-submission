@@ -7,10 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { WizardData, WizardFormat } from '@/src/lib/event-creation'
+import { slugifyTitle, type WizardData, type WizardFormat } from '@/src/lib/event-creation'
 
-// Step 2 — basics. The slug locks once the shell exists (it is the stable
-// public identifier). Location fields appear for offline/hybrid formats;
+// Step 2 — basics. The slug derives itself from the title (shown, still
+// editable until creation) and locks once the shell exists as the stable
+// public identifier. Location fields appear for offline/hybrid formats;
 // online events clear them on save.
 export function BasicsStep({
   data,
@@ -42,13 +43,26 @@ export function BasicsStep({
             disabled={disabled || liveLocked}
             maxLength={200}
             placeholder="Dogfood 2027"
-            onChange={(event) => onPatch({ title: event.target.value })}
+            onChange={(event) => {
+              const title = event.target.value
+              // Auto-slug while untouched: an empty slug, or one that still
+              // matches the previous title, follows the new title.
+              const patch: Partial<WizardData> = { title }
+              if (!slugLocked && (data.slug === '' || data.slug === slugifyTitle(data.title))) {
+                patch.slug = slugifyTitle(title)
+              }
+              onPatch(patch)
+            }}
           />
         </Field>
         <Field
           id="wiz-slug"
           label="Slug"
-          hint={slugLocked ? 'Slugs cannot change after creation.' : 'Lowercase letters, numbers, hyphens.'}
+          hint={
+            slugLocked
+              ? 'Slugs cannot change after creation.'
+              : 'Filled in from the title — tweak it if you like.'
+          }
         >
           <Input
             id="wiz-slug"

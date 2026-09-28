@@ -1,63 +1,124 @@
+'use client'
+
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Code2, GitBranch, Trophy, Users } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Rocket, Sparkles } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
-import { buttonVariants } from '@/components/ui/button'
 
-// homepage.md copy, rendered per docs/STYLE-GUIDELINES.md: flat theme-token
-// surfaces, single green accent on the key CTA, app-default type, no
-// gradients/glow. The ecosystem visual is a static flat card grid; the only
-// motion is a slow float guarded by prefers-reduced-motion (no new deps).
-const ecosystem = [
-  { icon: Code2, title: 'Ship', detail: '12k repos linked' },
-  { icon: Users, title: 'Team up', detail: 'Auto-matching on' },
-  { icon: Trophy, title: 'Win', detail: '$2.4M awarded' },
-  { icon: GitBranch, title: 'Fork', detail: '100k deploys' },
+// Homepage hero: transparent band over the fixed page-wide mesh backdrop,
+// with its own CSS glow/grid overlays for depth. Left: eyebrow, headline,
+// subcopy, dual CTAs. Right: procedural Three.js infinity cube (no external
+// assets). Bottom: upcoming-events ticker.
+const HeroScene = dynamic(() => import('./hero-scene'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0" aria-hidden="true" />,
+})
+
+const tickerItems = [
+  'Artificial Intelligence',
+  'Web3',
+  'Open Source',
+  'FinTech',
+  'GreenTech',
+  'Cybersecurity',
+  'AR/VR',
+  'DevOps',
 ]
 
 export default function HeroSection() {
+  const reduceMotion = useReducedMotion() ?? false
+  const rise = (delay: number) => ({
+    initial: reduceMotion ? false : { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, delay: reduceMotion ? 0 : delay, ease: 'easeOut' as const },
+  })
+
   return (
-    <section className="bg-background">
-      <div className="mx-auto grid max-w-5xl items-center gap-8 px-5 py-12 md:grid-cols-2 md:py-16">
+    <section className="relative overflow-hidden text-slate-900 dark:text-white">
+      {/* Backdrop: theme-aware wash, faint grid, horizon glow. */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_70%_40%,rgba(47,123,255,0.16),transparent_70%)] dark:bg-[radial-gradient(ellipse_60%_50%_at_70%_40%,rgba(56,89,199,0.35),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_35%_at_20%_80%,rgba(162,28,175,0.12),transparent_70%)] dark:bg-[radial-gradient(ellipse_40%_35%_at_20%_80%,rgba(168,85,247,0.22),transparent_70%)]" />
+        <div className="absolute inset-0 opacity-[0.16] bg-[linear-gradient(rgba(15,42,67,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(15,42,67,0.35)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_40%,black,transparent)] dark:opacity-[0.13] dark:bg-[linear-gradient(rgba(148,163,184,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.5)_1px,transparent_1px)]" />
+      </div>
+
+      <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-5 pb-10 pt-14 md:grid-cols-2 md:pt-20">
         <div>
-          <h1 className="text-[28px] font-bold leading-[1.15] tracking-[-0.03em] text-foreground">
-            Where Builders <span className="text-[#16a34a] dark:text-[#22c55e]">Innovate</span> &amp;
-            Communities Scale.
-          </h1>
-          <p className="mt-4 text-[14px] leading-6 text-muted-foreground">
-            The ultimate platform for hackers to build the future and organizers to host seamless
-            hackathons.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-2">
+          <motion.p
+            {...rise(0)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-cyan-700/25 bg-cyan-500/10 px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.14em] text-cyan-700 dark:border-white/15 dark:bg-white/5 dark:text-cyan-200"
+          >
+            <Sparkles size={12} strokeWidth={2} aria-hidden="true" />
+            The hackathon platform
+          </motion.p>
+          <motion.h1
+            {...rise(0.08)}
+            className="mt-5 text-[40px] font-bold leading-[1.06] tracking-[-0.02em] md:text-[58px]"
+          >
+            Empowering innovators, shaping the future.
+          </motion.h1>
+          <motion.p {...rise(0.16)} className="mt-5 max-w-lg text-[16px] leading-7 text-slate-600 dark:text-slate-300">
+            Host, discover, and collaborate at multiple leading global hackathons on the
+            ultimate platform for builders and creators.
+          </motion.p>
+          <motion.div {...rise(0.24)} className="mt-7 flex flex-wrap items-center gap-3">
             <Link
               href="#hackathons"
-              className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'h-10 bg-[#16a34a] px-5 text-white hover:bg-[#15803d]')}
+              className={cn(
+                'inline-flex h-12 items-center rounded-full bg-[#2f7bff] px-7 text-[14px] font-bold text-white',
+                'shadow-[0_0_24px_rgba(47,123,255,0.55)] transition-all hover:bg-[#4d8dff] hover:shadow-[0_0_32px_rgba(47,123,255,0.75)]',
+              )}
             >
-              Find a Hackathon
+              Explore hackathons
             </Link>
             <Link
-              href="#organizers"
-              className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'h-10 px-5')}
+              href="/console/events/new"
+              className={cn(
+                'inline-flex h-12 items-center gap-1.5 rounded-full border border-fuchsia-700/50 px-7 text-[14px] font-bold text-fuchsia-700',
+                'transition-all hover:border-fuchsia-600 hover:bg-fuchsia-500/10 hover:shadow-[0_0_24px_rgba(162,28,175,0.25)]',
+                'dark:border-fuchsia-400/70 dark:text-fuchsia-100 dark:hover:border-fuchsia-300 dark:hover:bg-fuchsia-400/10 dark:hover:shadow-[0_0_24px_rgba(232,121,249,0.35)]',
+              )}
             >
-              Explore Platform
+              <Rocket size={14} strokeWidth={2} aria-hidden="true" />
+              Host your event
             </Link>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4" aria-hidden="true">
-          {ecosystem.map((item, index) => (
-            <div
-              key={item.title}
-              className={
-                'rounded-xl border border-border bg-card p-6 transition-colors hover:border-[#16a34a] motion-safe:animate-[hero-float_7s_ease-in-out_infinite] motion-reduce:animate-none ' +
-                (index % 2 === 1 ? 'md:mt-6 motion-safe:[animation-delay:1.2s]' : '')
-              }
-            >
-              <item.icon size={20} strokeWidth={1.8} className="text-muted-foreground" />
-              <p className="mt-4 text-[15px] font-bold text-foreground">{item.title}</p>
-              <p className="mt-1 text-[12px] text-muted-foreground">{item.detail}</p>
-            </div>
-          ))}
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+          className="relative h-72 md:h-[420px]"
+        >
+          <HeroScene />
+        </motion.div>
+      </div>
+
+      <div className="relative border-t border-slate-900/10 bg-white/50 dark:border-white/10 dark:bg-black/30">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-5 py-2.5">
+          <div
+            className={cn(
+              'flex min-w-0 flex-1 whitespace-nowrap text-[13px] font-semibold text-slate-700 dark:text-slate-200',
+              !reduceMotion && 'motion-safe:animate-[hero-marquee_28s_linear_infinite]',
+            )}
+            aria-label="Popular tech tracks"
+          >
+            {[0, 1].map((copy) => (
+              <span key={copy} className="flex shrink-0 gap-8 pr-8" aria-hidden={copy === 1}>
+                {tickerItems.map((item) => (
+                  <span key={`${copy}-${item}`} className="flex items-center gap-8">
+                    <span>{item}</span>
+                    <span className="text-cyan-400" aria-hidden="true">
+                      |
+                    </span>
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>

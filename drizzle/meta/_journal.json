@@ -1,0 +1,111 @@
+{
+    "dialect": "postgresql",
+    "entries": [
+        {
+            "breakpoints": true,
+            "idx": 0,
+            "tag": "0000_t1_core_auth",
+            "version": "6",
+            "when": 1789852800000
+        },
+        {
+            "breakpoints": true,
+            "idx": 1,
+            "tag": "0001_event_phase_boundaries",
+            "version": "6",
+            "when": 1789996200000
+        },
+        {
+            "breakpoints": true,
+            "idx": 2,
+            "tag": "0002_fixture_alignment",
+            "version": "6",
+            "when": 1789996400000
+        },
+        {
+            "breakpoints": true,
+            "idx": 3,
+            "tag": "0003_audit_logs_created_at",
+            "version": "6",
+            "when": 1789996500000
+        },
+        {
+            "breakpoints": true,
+            "idx": 4,
+            "tag": "0004_prize_floor_trigger",
+            "version": "6",
+            "when": 1789996600000
+        },
+        {
+            "breakpoints": true,
+            "idx": 5,
+            "tag": "0005_event_creation_fields",
+            "version": "6",
+            "when": 1789996700000
+        },
+        {
+            "breakpoints": true,
+            "idx": 6,
+            "tag": "0006_lifecycle_published",
+            "version": "6",
+            "when": 1789996800000
+        },
+        {
+            "breakpoints": true,
+            "idx": 7,
+            "tag": "0007_tier2_judging",
+            "version": "6",
+            "when": 1790467200000
+        },
+        {
+            "breakpoints": true,
+            "idx": 8,
+            "tag": "0007_profile_fields",
+            "version": "6",
+            "when": 1789997000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 9,
+            "tag": "0008_profile_complete",
+            "version": "6",
+            "when": 1789997100000
+        },
+        {
+            "breakpoints": true,
+            "idx": 10,
+            "tag": "0009_team_management",
+            "version": "6",
+            "when": 1789997200000
+        },
+        {
+            "breakpoints": true,
+            "idx": 11,
+            "tag": "0010_trackless_drafts",
+            "version": "6",
+            "when": 1791000000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 12,
+            "tag": "0011_judging_feature",
+            "version": "6",
+            "when": 1792000000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 13,
+            "tag": "0012_tier3_community_voting",
+            "version": "6",
+            "when": 1793000000000
+        },
+        {
+            "breakpoints": true,
+            "idx": 14,
+            "tag": "0013_tier3_comments",
+            "version": "6",
+            "when": 1793000000001
+        }
+    ],
+    "version": "7"
+}

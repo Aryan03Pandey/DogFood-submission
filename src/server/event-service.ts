@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import {
   canChangePrize,
@@ -156,6 +156,20 @@ export async function listEvents(viewer: DbUser | null): Promise<DbEvent[]> {
   return rows.filter(
     (row) => row.status !== "DRAFT" || memberships.has(row.id),
   );
+}
+
+// Console event switcher: only events the viewer organizes (admins see
+// everything). Participants and judges never appear here — the switcher is
+// a management entry point, not a directory.
+export async function listManagedEvents(viewer: DbUser): Promise<DbEvent[]> {
+  const rows = await db.select().from(events).orderBy(events.createdAt);
+  if (viewer.role === "SUPERADMIN") return rows;
+  const managed = new Set(
+    (await listUserEventRoles(viewer.id))
+      .filter((row) => row.role === "ORGANIZER")
+      .map((row) => row.eventId),
+  );
+  return rows.filter((row) => managed.has(row.id));
 }
 
 export async function getEvent(
@@ -640,6 +654,32 @@ export async function unregisterFromEvent(actor: DbUser, eventId: string, passwo
   await db
     .delete(eventRoles)
     .where(and(eq(eventRoles.eventId, eventId), eq(eventRoles.userId, actor.id)))
+}
+
+// Personal event list for My Hackathons: every event where the viewer holds
+// a role mapping or sits on a team, current or past. No status filter —
+// participation history is the point.
+export async function getMyEvents(userId: string) {
+  const [roleRows, teamRows] = await Promise.all([
+    db
+      .select({ eventId: eventRoles.eventId, role: eventRoles.role })
+      .from(eventRoles)
+      .where(eq(eventRoles.userId, userId)),
+    db
+      .select({ eventId: teams.eventId })
+      .from(teamMembers)
+      .innerJoin(teams, eq(teamMembers.teamId, teams.id))
+      .where(eq(teamMembers.userId, userId)),
+  ])
+  const roles = new Map<string, string>()
+  for (const row of roleRows) roles.set(row.eventId, row.role)
+  const ids = new Set<string>([...roles.keys(), ...teamRows.map((row) => row.eventId)])
+  if (ids.size === 0) return []
+  const rows = await db.select().from(events).where(inArray(events.id, [...ids]))
+  return rows.map((row) => ({
+    ...serializeEvent(row),
+    myRole: roles.get(row.id) ?? 'TEAM_MEMBER',
+  }))
 }
 
 export async function deletePrize(

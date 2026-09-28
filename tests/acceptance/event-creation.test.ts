@@ -134,8 +134,9 @@ describe('wizard rules', () => {
 })
 
 describe('wizard prizes', () => {
-  it('requires at least one tier and the lock-in acknowledgment', () => {
-    expect(validatePrizes({ tiers: [], participationCertificate: false, acknowledged: false }).length).toBe(2)
+  it('allows zero tiers but still requires the lock-in acknowledgment (IMPROVEMENTS.md item 16)', () => {
+    expect(validatePrizes({ tiers: [], participationCertificate: false, acknowledged: true })).toEqual([])
+    expect(validatePrizes({ tiers: [], participationCertificate: false, acknowledged: false }).length).toBe(1)
     expect(
       validatePrizes({
         tiers: [

@@ -98,6 +98,10 @@ export function apiLogout(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>('/api/auth/logout', { method: 'POST' })
 }
 
+export function apiChangePassword(currentPassword: string, newPassword: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>('/api/auth/password', jsonBody({ currentPassword, newPassword }))
+}
+
 export function apiFetchSession(): Promise<SessionPayload> {
   return request<SessionPayload>('/api/auth/me')
 }

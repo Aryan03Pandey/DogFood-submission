@@ -35,13 +35,13 @@ export default function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f8fb] px-4">
-      <div className="w-full max-w-95 rounded-xl border border-[#e8e9ee] bg-white p-8">
-        <p className="text-[15px] font-bold tracking-[-0.02em]">dogfood</p>
-        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.03em] text-[#20222b]">Log in</h1>
-        <p className="mt-1 text-[12px] text-[#858894]">Offline-first hackathon console.</p>
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-95 rounded-xl border border-border bg-card p-8">
+        <p className="text-[15px] font-bold tracking-[-0.02em] text-foreground">RaptorHack<span className="text-[#16a34a] dark:text-[#22c55e]">.</span></p>
+        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.03em] text-foreground">Log in</h1>
+        <p className="mt-1 text-[12px] text-muted-foreground">Offline-first hackathon console.</p>
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#464956]">
+          <label className="flex flex-col gap-1 text-[12px] font-semibold text-foreground">
             Email
             <input
               type="email"
@@ -50,10 +50,10 @@ export default function LoginForm() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="organizer@local"
-              className="h-10 rounded-lg border border-[#e6e7ec] bg-[#fbfbfc] px-3 text-[13px] font-normal outline-none placeholder:text-[#b5b7bf] focus:border-[#aaa5ee]"
+              className="h-10 rounded-lg border border-border bg-background px-3 text-[13px] font-normal outline-none placeholder:text-muted-foreground focus:border-[#16a34a]"
             />
           </label>
-          <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#464956]">
+          <label className="flex flex-col gap-1 text-[12px] font-semibold text-foreground">
             Password
             <span className="relative flex">
               <input
@@ -63,14 +63,14 @@ export default function LoginForm() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
-                className="h-10 w-full rounded-lg border border-[#e6e7ec] bg-[#fbfbfc] px-3 pr-10 text-[13px] font-normal outline-none placeholder:text-[#b5b7bf] focus:border-[#aaa5ee]"
+                className="h-10 w-full rounded-lg border border-border bg-background px-3 pr-10 text-[13px] font-normal outline-none placeholder:text-muted-foreground focus:border-[#16a34a]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-pressed={showPassword}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#b5b7bf] transition-colors hover:bg-[#f1f2f5] hover:text-[#464956]"
+                className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#b5b7bf] transition-colors hover:bg-[#f1f2f5] hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -80,23 +80,23 @@ export default function LoginForm() {
               </button>
             </span>
           </label>
-          {error && <p className="rounded-lg bg-[#fdf0f0] px-3 py-2 text-[12px] font-semibold text-[#c04545]">{error}</p>}
+          {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-[12px] font-semibold text-destructive">{error}</p>}
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 inline-flex h-10 items-center justify-center rounded-lg bg-[#635bdb] text-[13px] font-bold text-white hover:bg-[#574fcc] disabled:opacity-60"
+            className="mt-1 inline-flex h-10 items-center justify-center rounded-lg bg-[#16a34a] text-[13px] font-bold text-white hover:bg-[#15803d] disabled:opacity-60"
           >
             {pending ? 'Logging in…' : 'Log in'}
           </button>
         </form>
-        <p className="mt-4 text-[11px] leading-5 text-[#999ca7]">
+        <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
           Seeded dev accounts use the password printed by the seed step. No account yet?{' '}
-          <a href="/signup" className="font-semibold text-[#635bdb]">
+          <a href="/signup" className="font-semibold text-[#16a34a] dark:text-[#22c55e]">
             Sign up
           </a>
         </p>
-        <p className="mt-1 text-[11px] leading-5 text-[#999ca7]">
-          <a href="/" className="font-semibold text-[#635bdb]">
+        <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+          <a href="/" className="font-semibold text-[#16a34a] dark:text-[#22c55e]">
             Back to home
           </a>
         </p>
