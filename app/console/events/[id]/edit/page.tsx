@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
 import {
   getEventRow,
   listPrizes,
@@ -34,6 +34,7 @@ export default async function EditEventPage({ params }: Params) {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
   const viewer = session.user
 
   let row
@@ -42,7 +43,7 @@ export default async function EditEventPage({ params }: Params) {
   } catch (error) {
     if (error instanceof AuthError) {
       return (
-        <main className="mx-auto max-w-[1440px] px-5 py-12">
+        <main className="mx-auto w-full max-w-[1440px] px-5 py-12">
           <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">Edit Event</h1>
           <p className="mt-2 text-[13px] text-muted-foreground">That event does not exist.</p>
         </main>
@@ -54,7 +55,7 @@ export default async function EditEventPage({ params }: Params) {
   const effective = await getEffectiveRole(viewer, eventId)
   if (effective !== 'SUPERADMIN' && effective !== 'ORGANIZER') {
     return (
-      <main className="mx-auto max-w-[1440px] px-5 py-12">
+      <main className="mx-auto w-full max-w-[1440px] px-5 py-12">
         <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">Edit Event</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
           Only organizers of this event can edit it.
@@ -105,7 +106,7 @@ export default async function EditEventPage({ params }: Params) {
   if (live) initial.acknowledged = true
 
   return (
-    <main className="mx-auto max-w-[1440px] px-5 py-12">
+    <main className="mx-auto w-full max-w-[1440px] px-5 py-12">
       <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">Edit Event</h1>
       <p className="mt-2 text-[13px] text-muted-foreground">
         {live

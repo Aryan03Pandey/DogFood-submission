@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
-import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
 import { getEvent, listPrizes, listTracks, serializeEvent, serializePrize, serializeTrack } from '@/src/server/event-service'
 import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
 import { PreviewShell } from '@/components/console/preview-shell'
@@ -22,6 +22,7 @@ export default async function EventPreviewPage({ params }: Params) {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
 
   const role = await getEffectiveRole(session.user, eventId)
   if (role !== 'SUPERADMIN' && role !== 'ORGANIZER') redirect('/console')
@@ -90,7 +91,7 @@ export default async function EventPreviewPage({ params }: Params) {
       : null
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
         Preview · {event.title} · {event.status.toLowerCase().replace('_', ' ')}
       </p>

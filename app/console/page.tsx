@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
-import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
 import {
   getDashboardOverview,
   listDashboardGallery,
@@ -61,6 +61,9 @@ export default async function ConsolePage({
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
+  // No console for non-organizers: participants, judges, and role-less
+  // users leave before anything event-scoped renders, even via a pasted URL.
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
 
   const allEvents = await listManagedEvents(session.user)
   const manageable = allEvents.map(serializeEvent)
@@ -102,7 +105,7 @@ export default async function ConsolePage({
               : undefined
           }
         />
-        <main className="min-h-[calc(100vh-4rem-60px)] min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
+        <main className="w-full min-h-[calc(100vh-4rem-60px)] min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
           <nav aria-label="Dashboard tabs" className="mb-6 flex gap-1 overflow-x-auto lg:hidden">
             {DASHBOARD_TABS.map((entry) => {
               const active = entry.id === tab

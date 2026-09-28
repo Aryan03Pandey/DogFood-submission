@@ -178,6 +178,16 @@ export async function getEffectiveRole(user: DbUser, eventId: string): Promise<U
   return resolveEffectiveRole(user.role, await getEventRole(user.id, eventId))
 }
 
+// Console gate: SUPERADMINs, plus anyone holding an ORGANIZER mapping on
+// at least one event. Participants, judges, and role-less users never reach
+// /console — pages redirect them out before rendering anything, and the
+// APIs enforce the same boundary per event.
+export async function hasConsoleAccess(user: DbUser): Promise<boolean> {
+  if (user.role === 'SUPERADMIN') return true
+  const rows = await listUserEventRoles(user.id)
+  return rows.some((row) => row.role === 'ORGANIZER')
+}
+
 export async function listEventRoles(eventId: string) {
   return db.select().from(eventRoles).where(eq(eventRoles.eventId, eventId))
 }

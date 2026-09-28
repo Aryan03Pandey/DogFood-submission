@@ -36,7 +36,8 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 }
 
-// Admin-dashboard delete (Event Settings). Organizers and superadmins only,
+// Admin-dashboard delete (Event Settings). SUPERADMINs only (organizers
+// manage content but cannot destroy the event — enforced in the service),
 // confirmed with the actor's password; dependent rows cascade or are
 // removed explicitly in the service.
 export async function DELETE(request: Request, { params }: Params) {

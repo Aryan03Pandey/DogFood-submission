@@ -1,27 +1,67 @@
-# Judging
+# JUDGING — assignment, scoring, normalization
 
-# Judging
+Implementation: `src/server/judging-service.ts` (orchestration),
+`src/lib/judging/normalization.ts` (pure math), tables in
+`docs/SCHEMA.md`. Console surface: dashboard Judging tab; judge
+surface: `/judge`.
 
-Judging is event-scoped. Organizers pass `eventId` in organizer request bodies and as a query parameter for progress, rankings, and judge queues. Event settings include `judgesPerSubmission` (default `3`) and `doubleBlindJudging` (default `false`).
+## 1. Judge assignment
 
-## Judge API
+Engines, chosen per event (`events.assignment_algorithm`):
 
-- `GET /api/judge/queue?eventId=<uuid>` lists only the caller's assignments. The event parameter is optional when the judge serves multiple events. Double-blind events omit team names and members.
-- `GET /api/judge/submissions/:id` returns submission details and the event rubric only when the caller has an assignment for that submission. Team identity is omitted for double-blind events.
-- `GET /api/judge/scores` returns the caller's own scores. `?judge=<user-id>` is organizer-only for another judge; ordinary judges receive `403` and participants receive `403`.
-- `POST /api/judge/scores` accepts `{ "assignmentId", "rubricScoresJson", "comment" }`. The assignment must belong to the caller. The server calculates the weighted total and marks the assignment done.
-- `POST /api/judge/pairwise` accepts winner and loser submission IDs, both of which must be assigned to the caller in the same event.
+- **ROUND_ROBIN** — deterministic rotation (`rotateOrder`) dealing
+  the next eligible judge per submission.
+- **K_COVER** (default) — `loadBalancedKCover()`: each submission gets
+  `min(k, judges)` distinct judges (`judges_per_submission`, default
+  3), always picking among currently least-loaded eligible judges
+  (id tiebreak). Guarantees minimum coverage while balancing queues.
 
-## Organizer API
+Eligibility filters, applied before either engine: judge must hold a
+JUDGE mapping; declared conflicts (`conflicts_of_interest`) and the
+judge's own team submissions are excluded; existing pairs are never
+duplicated (`judge_submission_unique`). Removing a judge re-runs the
+engine over orphaned assignments and reports orphan/reassign counts.
 
-- `POST /api/organizer/judges` accepts `{ "eventId", "userId" }` and grants the event-scoped judge role.
-- `POST /api/organizer/judges/:id/tracks` accepts `{ "eventId", "trackIds" }` and replaces the judge's qualified tracks.
-- `POST /api/organizer/coi` accepts `{ "eventId", "judgeId", "teamId" }` for a manual conflict. Assignment generation also persists `team_member` and `same_org` conflicts inferred from team membership and organization.
-- `POST /api/organizer/rubrics` creates a rubric or updates one when `id` is supplied. Criteria have stable IDs, labels, and non-negative weights.
-- `POST /api/organizer/assignments/generate` accepts `{ "eventId", "trackId?" }` and runs load-balanced k-cover for submitted, visible projects. Conflicted judges are excluded; the response's `unresolved` list reports submissions with fewer than k eligible reviewers.
-- `GET /api/organizer/assignments/progress?eventId=<uuid>` returns per-judge assigned, completed, and pending counts.
-- `GET /api/organizer/rankings?eventId=<uuid>` returns raw mean, z-score mean, min-max score, and trimmed mean side by side.
-- `GET /api/organizer/rankings/pairwise?eventId=<uuid>` returns Bradley-Terry strengths from submitted pairwise comparisons.
-- `GET /api/export.csv?eventId=<uuid>` exports raw scores, assignment progress, and normalized ranking columns. Without `eventId`, organizers export events they manage; superadmins can export all events.
+## 2. Rubrics & scoring workspace
 
-Every handler requires a valid session and checks event roles server-side. Judge score access is assignment-scoped; a query parameter never grants access to another judge's records.
+One `rubrics` row per event; criteria carry `weight`, `minScore`,
+`maxScore`, `kind` (int|float) and `step`, validated on save
+(non-empty, unique ids, positive total weight). The judge UI is a
+split pane (artifacts + inputs) with draft auto-save.
+`POST /api/judge/scores` requires owning the assignment and validates
+every criterion value; `rawTotal = weightedMean(...)` is frozen at
+write time so rubric edits never rewrite history. Judges may clear
+(reopen) their score and raise private flags
+(`submission_flags`, one live per assignment).
+
+## 3. Role isolation
+
+- Score reads are assignment-scoped: `getJudgeScores()` serves self
+  by default; `?judge=<other>` 403s unless the caller manages an
+  event containing that judge's assignments.
+- **Participants can never become judges**: `inviteJudge()` and
+  `assignEventRole()` refuse to lift a PARTICIPANT mapping (409);
+  organizers likewise can't be created from participants.
+- `double_blind_judging` masks participant identities on judge
+  payloads; flags stay judge-private until publish.
+
+## 4. Normalization
+
+Per submission (`computeRankings`): `raw` (mean of raw totals),
+`zScore` (mean of per-judge population-z values; zero-variance
+ballots contribute 0), `minMax` (raw means rescaled 0–100; all-equal
+→ 50), `trimmedMean` (plain mean under 5 reviews, else drop extremes).
+The event's `normalization` column selects the ranking column.
+Pairwise mode records Bradley-Terry ballots
+(`pairwise_comparisons`, P(i>j) = pᵢ/(pᵢ+pⱼ)).
+
+Worked proof on fixture data — raw #1 Salt Ledger falls to z #3
+while Iron Switch rises to #1 because its marks came from harsh
+judges: `docs/NORMALIZATION-PROOF.md`.
+
+## 5. Reporting
+
+`getAssignmentProgress` (per-judge completed/pending),
+`getRankings`, and batched streaming CSV (`streamCsvRows`, 500-row
+keyset pages) power the dashboard and `GET /api/export.csv` — all
+organizer-or-superadmin guarded.

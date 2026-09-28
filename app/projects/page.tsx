@@ -26,7 +26,7 @@ export default async function ProjectsPage({
   const projects = await getGalleryProjects(new Date(), seed)
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">
         Project Gallery
       </h1>

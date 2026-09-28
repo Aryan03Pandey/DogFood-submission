@@ -45,7 +45,7 @@ export default async function EventTeamPage({ params, searchParams }: Params) {
 
   if (viewer.role === 'SUPERADMIN') {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Manage team</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
@@ -60,7 +60,7 @@ export default async function EventTeamPage({ params, searchParams }: Params) {
   if (mapping !== 'PARTICIPANT') {
     const staff = mapping === 'ORGANIZER' || mapping === 'JUDGE'
     return (
-      <main className="mx-auto max-w-5xl px-5 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Manage team</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
@@ -75,7 +75,7 @@ export default async function EventTeamPage({ params, searchParams }: Params) {
 
   if (event.participationType === 'INDIVIDUAL') {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Manage team</h1>
         <div className="mt-6">
@@ -93,7 +93,7 @@ export default async function EventTeamPage({ params, searchParams }: Params) {
 
   const summary = await getMyTeam(viewer, event.id)
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
       <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Manage team</h1>
       <div className="mt-6">

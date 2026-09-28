@@ -29,7 +29,7 @@ export default async function EmbedGalleryPage({ params, searchParams }: Props) 
   return (
     <div className={theme === 'dark' ? 'dark' : undefined}>
       <ResizeReporter />
-      <main className="bg-background p-4 text-foreground">
+      <main className="w-full bg-background p-4 text-foreground">
         {projects.length === 0 ? (
           <p className="text-sm text-muted-foreground">No public projects yet.</p>
         ) : (

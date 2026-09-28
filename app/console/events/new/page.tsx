@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { getSessionUser } from '@/src/server/auth-service'
+import { getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
 import { EventWizard } from '@/components/console/event-wizard'
 
 export const dynamic = 'force-dynamic'
@@ -18,9 +18,10 @@ export default async function NewEventPage() {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
 
   return (
-    <main className="mx-auto max-w-[1440px] px-5 py-12">
+    <main className="mx-auto w-full max-w-[1440px] px-5 py-12">
         <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">Host an Event</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
           Seven steps, saved as you go. Events start as DRAFT — invisible until their schedule opens them.

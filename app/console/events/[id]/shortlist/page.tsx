@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import Link from 'next/link'
 import { ListChecks } from 'lucide-react'
-import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
 import { getEvent, serializeEvent } from '@/src/server/event-service'
 
 export const dynamic = 'force-dynamic'
@@ -20,6 +20,7 @@ export default async function ShortlistPage({ params }: Params) {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
 
   let event
   try {
@@ -32,7 +33,7 @@ export default async function ShortlistPage({ params }: Params) {
   if (role !== 'SUPERADMIN' && role !== 'ORGANIZER') redirect(`/console?eventId=${eventId}&tab=participants`)
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
           {event.title}
         </p>

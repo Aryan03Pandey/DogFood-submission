@@ -89,10 +89,17 @@ export default function GalleryBrowser({ projects }: { projects: GalleryProject[
             {pageRows.map((project) => (
               <article
                 key={project.id}
-                className="flex flex-col rounded-xl border border-border bg-card p-6 transition-colors hover:border-muted-foreground"
+                className="relative flex flex-col rounded-xl border border-border bg-card p-6 transition-colors hover:border-muted-foreground"
               >
                 <h2 className="text-[15px] font-bold text-foreground">
-                  <Link href={`/projects/${project.id}`} className="hover:underline">
+                  {/* Stretched link: the whole card body navigates to the
+                  project page; the overlay keeps the title as the single
+                  tab stop, and links above it (e.g. repo) stay clickable
+                  via relative positioning. */}
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className="hover:underline after:absolute after:inset-0"
+                  >
                     {project.title}
                   </Link>
                 </h2>
@@ -119,7 +126,7 @@ export default function GalleryBrowser({ projects }: { projects: GalleryProject[
                       href={project.repoUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-[12px] font-bold text-muted-foreground hover:text-foreground"
+                      className="relative z-10 inline-flex items-center gap-1 text-[12px] font-bold text-muted-foreground hover:text-foreground"
                     >
                       Repository <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
                     </a>

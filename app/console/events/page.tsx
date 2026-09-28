@@ -2,8 +2,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-import { getSessionUser } from '@/src/server/auth-service'
-import { listEvents, serializeEvent } from '@/src/server/event-service'
+import { getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
+import { listManagedEvents, serializeEvent } from '@/src/server/event-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,11 +16,15 @@ export default async function ConsoleEventsPage() {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
-  const events = (await listEvents(session.user)).map(serializeEvent)
+  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  // Management entry point: only events this viewer organizes (admins see
+  // everything). Using listEvents here would leak every non-draft event
+  // into the console for participants and judges.
+  const events = (await listManagedEvents(session.user)).map(serializeEvent)
   const canCreate = session.user.role === 'SUPERADMIN'
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground">My Events</h1>

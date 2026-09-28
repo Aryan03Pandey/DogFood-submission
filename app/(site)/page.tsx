@@ -15,7 +15,7 @@ import MeshBackdrop from '@/components/home/mesh-backdrop'
 // from the site layout.
 export default function HomePage() {
   return (
-    <main>
+    <main className="w-full">
       <MeshBackdrop />
       <HeroSection />
       <StatsBanner />

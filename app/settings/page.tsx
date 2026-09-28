@@ -40,7 +40,7 @@ export default async function SettingsPage() {
   }))
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
         Account Settings
       </p>

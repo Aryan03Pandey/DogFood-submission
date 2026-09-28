@@ -61,13 +61,19 @@ services:
     build: .
     # Migrate first: on a fresh volume no tables exist yet, and the app waits
     # on this service, so the app entrypoint migration alone would never run.
-    # Fixtures load last and skip when the sample event already exists.
-    command: ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run db:fixtures"]
+    # Fixtures load second-to-last and skip when the sample event already
+    # exists; the checker config (dogfood:toml) runs last and writes
+    # .dogfood.toml directly to the repo root via the bind-mount below
+    # (the block is still printed to the logs as a fallback). The file is
+    # committed, so it always exists at mount time — do not remove it.
+    command: ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run db:fixtures && npm run dogfood:toml"]
     depends_on:
       postgres:
         condition: service_healthy
       seaweedfs:
         condition: service_healthy
+    volumes:
+      - ./.dogfood.toml:/app/.dogfood.toml
     environment:
       DATABASE_URL: postgres://dogfood:dogfood@postgres:5432/dogfood
       S3_ENDPOINT: http://seaweedfs:8333
@@ -78,6 +84,7 @@ services:
       SEAWEEDFS_FILER_URL: http://seaweedfs:8888
       OFFLINE_MODE: "true"
       NODE_ENV: production
+      DOGFOOD_BASE_URL: http://localhost:3000
 
   cli:
     build: .

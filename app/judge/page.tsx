@@ -21,7 +21,7 @@ export default async function JudgePage() {
 
   if (!(await judgesAnyEvent(session.user))) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Judging</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Judge dashboard</h1>
         <p className="mt-2 max-w-md text-[13px] text-muted-foreground">
@@ -39,7 +39,7 @@ export default async function JudgePage() {
   const bucket = process.env.S3_BUCKET ?? 'dogfood-assets'
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8">
+    <main className="mx-auto w-full max-w-7xl px-5 py-8">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Judging</p>
       <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Judge dashboard</h1>
       <div className="mt-6">

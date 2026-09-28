@@ -11,6 +11,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:fixtures": "tsx scripts/load-fixtures.ts",
+    "dogfood:toml": "tsx scripts/write-dogfood-toml.ts",
     "db:judging-sample": "tsx scripts/seed-judging-sample.ts",
     "seed": "tsx scripts/seed.ts",
     "test": "vitest run",

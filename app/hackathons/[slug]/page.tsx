@@ -115,7 +115,7 @@ export default async function EventPage({ params }: Params) {
   const showLocation = event.format !== 'ONLINE'
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <article className="overflow-hidden rounded-xl border border-border bg-card">
         {event.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

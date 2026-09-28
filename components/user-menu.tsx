@@ -21,9 +21,8 @@ import { visibleMenuGroups } from '@/src/lib/user-menu'
 // Account dropdown opened from the navbar avatar. Structure mirrors the
 // approved mock: identity header, grouped icon rows, hairline dividers.
 // Token surfaces only so it follows the global light/dark theme.
-// Destinations: Organizer Dashboard and Log Out are live; profile,
-// hackathon, project, and settings pages do not exist yet, so those rows
-// point at their planned paths and will 404 until the pages are built.
+// Destinations: Organizer Dashboard and Log Out are live, as are the
+// profile, hackathon, project, and settings pages linked below.
 const ICONS: Record<string, typeof Pencil> = {
   'Edit Profile': Pencil,
   'My Hackathons': Compass,

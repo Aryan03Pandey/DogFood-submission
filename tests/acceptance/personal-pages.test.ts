@@ -14,6 +14,14 @@ describe('personal pages (IMPROVEMENTS.md items 1-4)', () => {
     expect(menu).not.toMatch(/My Hackathons', href: '\/hackathons'/)
   })
 
+  it('renders personal pages inside the site chrome (navbar + footer)', () => {
+    for (const file of ['app/my-hackathons/layout.tsx', 'app/my-projects/layout.tsx']) {
+      const layout = read(file)
+      expect(layout).toMatch(/SiteChrome/)
+      expect(layout).toMatch(/<SiteChrome>/)
+    }
+  })
+
   it('ships a my-hackathons page scoped to the viewer registrations', () => {
     const page = read('app/my-hackathons/page.tsx')
     expect(page).toMatch(/getMyEvents/)
@@ -77,5 +85,14 @@ describe('personal pages (IMPROVEMENTS.md items 1-4)', () => {
     expect(browser).toMatch(/PAGE_SIZE = 30/)
     expect(browser).toMatch(/href=\{`\/projects\/\$\{project\.id\}`\}/)
     expect(browser).toMatch(/Page \{safePage \+ 1\} of \{pageCount\}/)
+  })
+
+  it('makes the whole gallery card body clickable via a stretched title link (item 4)', () => {
+    const browser = read('components/gallery-browser.tsx')
+    // Card root establishes positioning context; the title link overlays it.
+    expect(browser).toMatch(/<article[\s\S]*?className="relative flex flex-col/)
+    expect(browser).toMatch(/after:absolute after:inset-0/)
+    // External links stay above the overlay so they remain clickable.
+    expect(browser).toMatch(/relative z-10 inline-flex/)
   })
 })

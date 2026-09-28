@@ -1,19 +1,19 @@
 [portal]
-base_url = "http://localhost:3001"
+base_url = "http://localhost:3000"
 
 [tiers]
 claimed = ["T1", "T2"]
 pitch = "Dogfood 2026 hackathon portal."
 
 [auth]
-organizer   = "Cookie: dogfood_session=Xcn02s2FMFupPXgXNncMsdZzFtpCNK70-yCOTDcgkFA"
-judge_a     = "Cookie: dogfood_session=7KqUyxx8w6BEf362UeyGeCVwJ-wya4DiHcTQSDnvIk4"
-judge_b     = "Cookie: dogfood_session=nTplHUIVJ-C8neMGRCKasXpd9BjAM_jpdMy5cCKCNOc"
-participant = "Cookie: dogfood_session=v_Y-JKDPuJuyPdTTDg6TJiw8-OdJz7FS1F_69P0a6pU"
+organizer   = "Cookie: dogfood_session=ZPQF-TT75KWSZo-y92R6VXQGSj4r90grNESgqAd26Tw"
+judge_a     = "Cookie: dogfood_session=dKAwTaZ-E-i2kKaZ5HppVVrJ2L4w93QN2DIqg8t05Mw"
+judge_b     = "Cookie: dogfood_session=fO99SS6T10AH6x470vv3oE8cR408eP7djK3ETCJ0ET4"
+participant = "Cookie: dogfood_session=JQ4YIr2Fwv9hIT-xt3vtDml12zkMS6YEhOG82w8sfAA"
 
 [routes]
 gallery      = "/projects"
-submit       = "/api/events/28cf436e-b0d9-4697-9dd6-64611ad70498/submissions"
+submit       = "/api/events/8bc0ae24-3c67-4382-a5c4-148bc86ec239/submissions"
 judge_scores = "/api/judge/scores"
-peer_scores  = "/api/judge/scores?judge=6c253e0d-bbc3-4cbd-bfca-a7f8f31e0ae8"
-csv_export   = "/api/export.csv?eventId=28cf436e-b0d9-4697-9dd6-64611ad70498"
+peer_scores  = "/api/judge/scores?judge=2faaad25-0565-4123-934b-d125e7cc9ef1"
+csv_export   = "/api/export.csv?eventId=8bc0ae24-3c67-4382-a5c4-148bc86ec239"

@@ -1,45 +1,45 @@
 # HOW: `.dogfood.toml` on a clean install / docker build
 
-Short answer: **nothing generates it.** No Dockerfile step, no compose
-service, and no seed script writes `.dogfood.toml`. It is a hand-built,
-per-environment file (the spec calls this the "Priya copies those into a
-file" step — see `docs/spec.md`, "File 1: `.dogfood.toml`"). The copy
-committed in this repo only works against this dev database.
+**It is generated.** `scripts/write-dogfood-toml.ts` (`pnpm dogfood:toml`)
+mints fresh sessions for the four checker roles against the real seeded rows
+and writes `.dogfood.toml` — then prints the same block for `docker compose
+up` logs. The copy committed in this repo is only valid for the database
+that generated it; any reseed or fresh install needs a fresh one.
 
-## Why it can't be copied between installs
+## Why it must be generated per install
 
 The file embeds values that are random or install-specific:
 
 - `[auth]` cookies are `dogfood_session` token values. Sessions are created
-  at login with random tokens, so they differ on every install and expire.
-- `[routes]` UUIDs (event id, judge id) belong to rows in that install's
-  database. The event id in the committed file was created ad-hoc in this
-  dev DB — it appears in neither `src/db/fixtures.json` nor any seed
-  script, so no fresh install will ever contain it.
+  with random tokens (`createSession` in `src/server/auth-service.ts`) and
+  expire after 7 days (`SESSION_TTL_MS`), so they differ on every install.
+- `[routes]` UUIDs (fixture event id, judge-A user id) belong to rows in
+  that install's database.
 
-## What each install path gives you
+## What the generator does
 
-- `docker compose up` (dev compose): a one-shot service runs
-  `db:migrate && db:seed && db:fixtures`. You get deterministic demo
-  accounts (`admin@local`, `organizer@local`, `judge1@local`,
-  `participant@local`, all sharing the documented dev password in
-  `scripts/seed.ts`) plus fixture data — but sessions and row UUIDs are
-  still fresh per install.
-- Production `docker build` image (`Dockerfile` CMD): applies pending
-  migrations only, then starts Next.js on an **empty** database. Create
-  users, events, and roles through the UI or CLI first.
+1. Finds the fixture event (`sample-hack-2026` from `src/db/fixtures.json`).
+2. Grants `organizer@local` an `ORGANIZER` mapping on it (idempotent —
+   the checker exports that event as the organizer).
+3. Picks the first two fixture judges in load order (both hold `JUDGE`
+   mappings plus real scores on the fixture event).
+4. Mints sessions for organizer, judge A, judge B, and `participant@local`.
+5. Writes `.dogfood.toml` (base URL from `DOGFOOD_BASE_URL`, default
+   `http://localhost:3000`) and prints it.
 
-## Regenerating the file for a new environment
+## Which install path runs it
 
-1. Boot the stack and log in through the UI once per role you need
-   (`organizer`, two judges, one participant — note the seed only creates
-   one judge account, so invite/create the second).
-2. Copy each role's `dogfood_session` cookie value into `[auth]`.
-3. Pick the event (console URL or `/api/events`) and the judge id for the
-   peer-scores probe, and fill in `[routes]`.
-4. Set `[portal] base_url` and honest `[tiers] claimed` values.
-5. Run the checker with fixtures:
-   `python3 scripts/run.py .dogfood.toml --fixtures src/db/fixtures.json`
+- `docker compose up`: the one-shot `seed` service runs
+  `db:migrate && db:seed && db:fixtures && dogfood:toml`. The file lands
+  inside the container, so **copy the printed block from the seed logs**
+  into repo-root `.dogfood.toml` — the spec's "Priya" step. Refresh any
+  time with `docker compose run --rm seed` (sessions expire after 7 days).
+- Local dev: `pnpm db:seed && pnpm db:fixtures && pnpm dogfood:toml`
+  writes the repo-root file directly (needs Postgres reachable per
+  `.env.example`).
 
-If the DB is ever reset or reseeded, repeat from step 1 — the old cookies
-and UUIDs are dead.
+Then run the checker with fixtures:
+
+```
+python3 scripts/run.py .dogfood.toml --fixtures src/db/fixtures.json > acceptance-report.txt
+```

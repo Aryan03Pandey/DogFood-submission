@@ -30,6 +30,32 @@ describe('auth + console authorization (IMPROVEMENTS.md items 9-10)', () => {
     expect(page).not.toMatch(/listEvents\(session\.user\)/)
   })
 
+  it('scopes the console My Events list to managed events (item 10b)', () => {
+    const page = read('app/console/events/page.tsx')
+    expect(page).toMatch(/listManagedEvents\(session\.user\)/)
+    expect(page).not.toMatch(/listEvents\(session\.user\)/)
+  })
+
+  it('denies the whole console to non-organizers on every page, URL included', () => {
+    const service = read('src/server/auth-service.ts')
+    expect(service).toMatch(/export async function hasConsoleAccess/)
+    expect(service).toMatch(/user\.role === 'SUPERADMIN'/)
+    expect(service).toMatch(/row\.role === 'ORGANIZER'/)
+    for (const file of [
+      'app/console/page.tsx',
+      'app/console/events/page.tsx',
+      'app/console/events/new/page.tsx',
+      'app/console/events/[id]/edit/page.tsx',
+      'app/console/events/[id]/preview/page.tsx',
+      'app/console/events/[id]/shortlist/page.tsx',
+    ]) {
+      const page = read(file)
+      expect(page).toMatch(/hasConsoleAccess\(session\.user\)/)
+      expect(page).toMatch(/redirect\('\/my-hackathons'\)/)
+    }
+    expect(read('components/footer.tsx')).not.toMatch(/href="\/console"/)
+  })
+
   it('reserves event deletion for admins on API and UI (item 10c)', () => {
     const service = read('src/server/dashboard-service.ts')
     expect(service).toMatch(/actor\.role !== 'SUPERADMIN'[\s\S]*FORBIDDEN/)

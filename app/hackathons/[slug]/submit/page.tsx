@@ -44,7 +44,7 @@ export default async function EventSubmitPage({ params }: Params) {
   if (mapping !== 'PARTICIPANT' && viewer.role !== 'SUPERADMIN') {
     const staff = mapping === 'ORGANIZER' || mapping === 'JUDGE'
     return (
-      <main className="mx-auto max-w-5xl px-5 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 py-12">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Make a submission</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">
@@ -67,7 +67,7 @@ export default async function EventSubmitPage({ params }: Params) {
     summary?.status === 'final' ? await getPrizeAwardForSubmission(summary.id).catch(() => null) : null
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{event.title}</p>
       <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-foreground">Make a submission</h1>
       {summary?.status === 'final' && (

@@ -19,7 +19,7 @@ export default async function InvitePage({
   const resolved = token ? await resolveInviteToken(token) : null
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-12">
+    <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-border bg-card p-10 text-center">
         <span
           aria-hidden="true"
