@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dogfood
+      POSTGRES_PASSWORD: dogfood
+      POSTGRES_DB: dogfood
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dogfood -d dogfood"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    command: "server -dir=/data -volume.max=5 -s3 -filer"
+    ports: ["8333:8333", "8888:8888", "9333:9333", "19333:19333"]
+    volumes: [seaweeddata:/data]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9333/cluster/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://dogfood:dogfood@postgres:5432/dogfood
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: dogfood
+      S3_SECRET_KEY: dogfoodlocal
+      S3_BUCKET: dogfood-assets
+      S3_REGION: us-east-1
+      SEAWEEDFS_FILER_URL: http://seaweedfs:8888
+      OFFLINE_MODE: "true"
+      NODE_ENV: production
+      PORT: "3000"
+      APP_URL: http://localhost:3000
+      SESSION_SECRET: docker-container-super-secret-key-32chars
+    ports: ["3000:3000"]
+
+  # One-shot boot tasks: `docker compose up` alone migrates (app entrypoint),
+  # seeds, and proves the CLI — no extra commands needed. The test suite is
+  # NOT run on boot; it is ready to run with zero setup (see `cli` service).
+  seed:
+    build: .
+    # Migrate first: on a fresh volume no tables exist yet, and the app waits
+    # on this service, so the app entrypoint migration alone would never run.
+    # Fixtures load last and skip when the sample event already exists.
+    command: ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run db:fixtures"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://dogfood:dogfood@postgres:5432/dogfood
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: dogfood
+      S3_SECRET_KEY: dogfoodlocal
+      S3_BUCKET: dogfood-assets
+      S3_REGION: us-east-1
+      SEAWEEDFS_FILER_URL: http://seaweedfs:8888
+      OFFLINE_MODE: "true"
+      NODE_ENV: production
+
+  cli:
+    build: .
+    command: ["npm", "run", "cli"]
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://dogfood:dogfood@postgres:5432/dogfood
+      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ACCESS_KEY: dogfood
+      S3_SECRET_KEY: dogfoodlocal
+      S3_BUCKET: dogfood-assets
+      S3_REGION: us-east-1
+      SEAWEEDFS_FILER_URL: http://seaweedfs:8888
+      OFFLINE_MODE: "true"
+      NODE_ENV: production
+
+volumes:
+  pgdata:
+  seaweeddata:
