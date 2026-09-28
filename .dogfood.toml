@@ -1,0 +1,19 @@
+[portal]
+base_url = "http://localhost:3001"
+
+[tiers]
+claimed = ["T1", "T2"]
+pitch = "Dogfood 2026 hackathon portal."
+
+[auth]
+organizer   = "Cookie: dogfood_session=Xcn02s2FMFupPXgXNncMsdZzFtpCNK70-yCOTDcgkFA"
+judge_a     = "Cookie: dogfood_session=7KqUyxx8w6BEf362UeyGeCVwJ-wya4DiHcTQSDnvIk4"
+judge_b     = "Cookie: dogfood_session=nTplHUIVJ-C8neMGRCKasXpd9BjAM_jpdMy5cCKCNOc"
+participant = "Cookie: dogfood_session=v_Y-JKDPuJuyPdTTDg6TJiw8-OdJz7FS1F_69P0a6pU"
+
+[routes]
+gallery      = "/projects"
+submit       = "/api/events/28cf436e-b0d9-4697-9dd6-64611ad70498/submissions"
+judge_scores = "/api/judge/scores"
+peer_scores  = "/api/judge/scores?judge=6c253e0d-bbc3-4cbd-bfca-a7f8f31e0ae8"
+csv_export   = "/api/export.csv?eventId=28cf436e-b0d9-4697-9dd6-64611ad70498"
