@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ExternalLink, FileText, X } from 'lucide-react'
 
 import { normalizeSubmissionAssets } from '@/src/lib/submissions'
+import { submissionAssetUrl } from '@/src/lib/upload'
 
 function assetKind(mime: string, name: string): 'image' | 'video' | 'doc' | 'file' {
   if (mime.startsWith('image/')) return 'image'
@@ -49,7 +50,7 @@ export function SubmissionAssets({
     <div className="mt-5 flex flex-col gap-4">
       <h3 className="text-[15px] font-bold text-foreground">Assets</h3>
       {assets.map((asset) => {
-        const url = `${assetBase}/${bucket}/${asset.key}`
+        const url = submissionAssetUrl(assetBase, bucket, asset.key)
         const kind = assetKind(asset.mime, asset.name)
         return (
           <figure key={asset.key} className="overflow-hidden rounded-lg border border-border">

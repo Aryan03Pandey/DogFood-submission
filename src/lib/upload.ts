@@ -58,6 +58,15 @@ export function publicUploadUrl(path: string): string {
   return `/api/files/${path.replace(/^\//, '')}`
 }
 
+// Public URL for one submission asset. Submission galleries (judge, project,
+// voting) receive the raw filer base, which browsers cannot reach when it is
+// a localhost/compose address — route those through the same-origin proxy.
+// Real CDN/public bases pass through untouched.
+export function submissionAssetUrl(assetBase: string, bucket: string, key: string): string {
+  const direct = `${assetBase.replace(/\/$/, '')}/${bucket}/${key}`
+  return resolveFileUrl(direct) ?? direct
+}
+
 // Rewrites legacy absolute filer URLs (rows written before the same-origin
 // proxy, e.g. http://localhost:8888/<bucket>/<key>) to /api/files/… so old
 // events heal without a migration. Anything else passes through untouched.

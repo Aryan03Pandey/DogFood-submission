@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { GET } from '../../app/api/files/[...path]/route'
-import { publicUploadUrl, resolveFileUrl } from '../../src/lib/upload'
+import { publicUploadUrl, resolveFileUrl, submissionAssetUrl } from '../../src/lib/upload'
 
 describe('same-origin file proxy (ngrok/CORS fix)', () => {
   it('emits app-relative URLs by default', () => {
@@ -29,6 +29,18 @@ describe('same-origin file proxy (ngrok/CORS fix)', () => {
     expect(resolveFileUrl('https://cdn.example.com:8080/b/k.png')).toBe('https://cdn.example.com:8080/b/k.png')
     expect(resolveFileUrl(null)).toBeNull()
     expect(resolveFileUrl('')).toBeNull()
+  })
+
+  it('proxies submission asset URLs off compose/loopback filer bases', () => {
+    expect(
+      submissionAssetUrl('http://seaweedfs:8888', 'dogfood-assets', 'submissions/e/s.png'),
+    ).toBe('/api/files/dogfood-assets/submissions/e/s.png')
+    expect(
+      submissionAssetUrl('http://localhost:8888/', 'dogfood-assets', 'submissions/e/s.png'),
+    ).toBe('/api/files/dogfood-assets/submissions/e/s.png')
+    expect(
+      submissionAssetUrl('https://cdn.example.com', 'dogfood-assets', 'submissions/e/s.png'),
+    ).toBe('https://cdn.example.com/dogfood-assets/submissions/e/s.png')
   })
 
   it('refuses path traversal without touching the filer', async () => {
