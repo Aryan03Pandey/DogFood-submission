@@ -1,7 +1,7 @@
 # Normalization Proof — fixture data
 
 This document shows that the judging normalization in
-`src/server/judging-service.ts` (`computeRankings`, via
+`src/server/assignment-service.ts` (`computeRankings`, via
 `src/lib/judging/normalization.ts`) does what it claims: it removes
 judge harshness/generosity bias from the leaderboard. Every number below
 was produced by running the **actual backend functions**

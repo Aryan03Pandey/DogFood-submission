@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { assignmentGenerationSchema } from "@/src/lib/api/judging-schemas";
-import { generateAssignments } from "@/src/server/judging-service";
+import { generateAssignments } from "@/src/server/assignment-service";
 import {
   authErrorResponse,
   parseBody,

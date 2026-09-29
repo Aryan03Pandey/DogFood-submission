@@ -3,7 +3,7 @@ import { db } from "../db";
 import { judgeAssignments, scores, submissions, users, votes, deriveEventStatus, type DbUser } from "../db/schema";
 import { AuthError, getEffectiveRole } from "./auth-service";
 import { getEventRow } from "./event-service";
-import { getPublishedRankings } from "./judging-service";
+import { getPublishedRankings } from "./assignment-service";
 import { recordAuditLog } from "./audit-service";
 import { signEnvelope, type SignedEnvelope } from "./signing-service";
 

@@ -6,10 +6,10 @@ claimed = ["T1", "T2"]
 pitch = "Dogfood 2026 hackathon portal."
 
 [auth]
-organizer   = "Cookie: dogfood_session=ZPQF-TT75KWSZo-y92R6VXQGSj4r90grNESgqAd26Tw"
-judge_a     = "Cookie: dogfood_session=dKAwTaZ-E-i2kKaZ5HppVVrJ2L4w93QN2DIqg8t05Mw"
-judge_b     = "Cookie: dogfood_session=fO99SS6T10AH6x470vv3oE8cR408eP7djK3ETCJ0ET4"
-participant = "Cookie: dogfood_session=JQ4YIr2Fwv9hIT-xt3vtDml12zkMS6YEhOG82w8sfAA"
+organizer   = "Cookie: dogfood_session=q_eLbAsXC-379OnRvQxV8UfrqIAe6_hoGyNIZd777aA"
+judge_a     = "Cookie: dogfood_session=N7jZRAjw5BVz9gmdDrW-7ES_rcvXKqz3XX4lhFkAeUw"
+judge_b     = "Cookie: dogfood_session=1HdWDH0po_G3ni-vss6BqfSS2qam_t4yKS_-ieEpOuY"
+participant = "Cookie: dogfood_session=zcSNLkhZ4gZKd0QDmFbw3OgxiU56iItfqVOMkEpcyeY"
 
 [routes]
 gallery      = "/projects"

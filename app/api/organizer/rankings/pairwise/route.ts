@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPairwiseRankings } from "@/src/server/judging-service";
+import { getPairwiseRankings } from "@/src/server/assignment-service";
 import {
   authErrorResponse,
   requireSession,

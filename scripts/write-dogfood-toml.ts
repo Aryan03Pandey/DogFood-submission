@@ -39,7 +39,7 @@ export function renderDogfoodToml(input: DogfoodTomlInput): string {
     `base_url = "${input.baseUrl}"`,
     '',
     '[tiers]',
-    'claimed = ["T1", "T2"]',
+    'claimed = ["T1", "T2", "T3", "T4"]',
     'pitch = "Dogfood 2026 hackathon portal."',
     '',
     '[auth]',

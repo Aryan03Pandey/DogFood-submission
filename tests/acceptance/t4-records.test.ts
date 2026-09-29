@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // and the public results manifest. Fully DB-free, same layered-mock
 // convention as t4-export-signing.test.ts (mock ../../src/db + crypto/keys)
 // plus mocking the other services records-service.ts calls into
-// (auth-service/event-service/judging-service/audit-service), rather than
+// (auth-service/event-service/assignment-service/audit-service), rather than
 // their internal queries.
 const hoisted = vi.hoisted(() => {
   const { generateKeyPairSync } = require('node:crypto') as typeof import('node:crypto')
@@ -36,7 +36,7 @@ vi.mock('../../src/server/auth-service', async (importOriginal) => {
   return { ...actual, getEffectiveRole: (...args: unknown[]) => hoisted.state.getEffectiveRole(...args) }
 })
 vi.mock('../../src/server/event-service', () => ({ getEventRow: (...args: unknown[]) => hoisted.state.getEventRow(...args) }))
-vi.mock('../../src/server/judging-service', () => ({ getPublishedRankings: (...args: unknown[]) => hoisted.state.getPublishedRankings(...args) }))
+vi.mock('../../src/server/assignment-service', () => ({ getPublishedRankings: (...args: unknown[]) => hoisted.state.getPublishedRankings(...args) }))
 vi.mock('../../src/server/audit-service', () => ({ recordAuditLog: (...args: unknown[]) => hoisted.state.recordAuditLog(...args) }))
 
 import { AuthError } from '../../src/server/auth-service'

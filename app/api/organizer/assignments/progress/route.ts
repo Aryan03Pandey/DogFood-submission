@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAssignmentProgress } from "@/src/server/judging-service";
+import { getAssignmentProgress } from "@/src/server/assignment-service";
 import {
   authErrorResponse,
   requireSession,

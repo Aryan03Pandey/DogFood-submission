@@ -2,8 +2,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-import { getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
-import { listManagedEvents, serializeEvent } from '@/src/server/event-service'
+import { getSessionUser } from '@/src/server/auth-service'
+import { listManagedEvents, managesAnyEvent, serializeEvent } from '@/src/server/event-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export default async function ConsoleEventsPage() {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
-  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  if (!(await managesAnyEvent(session.user))) redirect('/my-hackathons')
   // Management entry point: only events this viewer organizes (admins see
   // everything). Using listEvents here would leak every non-draft event
   // into the console for participants and judges.

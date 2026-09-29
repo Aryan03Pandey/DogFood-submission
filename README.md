@@ -39,7 +39,7 @@ users instantly via `/api/auth/impersonate` — dev-only by design.
 python3 scripts/run.py .dogfood.toml --fixtures src/db/fixtures.json > acceptance-report.txt
 ```
 
-Honest tier claims live in `.dogfood.toml` (`claimed = ["T1", "T2"]`);
+Honest tier claims live in `.dogfood.toml` (`claimed = ["T1", "T2", "T3", "T4"]`);
 the committed `acceptance-report.txt` is the checker's own output.
 
 ## Local development

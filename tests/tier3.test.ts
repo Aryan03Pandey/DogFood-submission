@@ -189,6 +189,6 @@ describe('tier-3 audit coverage', () => {
     expect(service).toMatch(/SCORE_CLEARED/)
     expect(service).toMatch(/FLAG_ADDED/)
     expect(service).toMatch(/FLAG_CLEARED/)
-    expect(service).toMatch(/ASSIGNMENTS_GENERATED/)
+    expect(read('src/server/assignment-service.ts')).toMatch(/ASSIGNMENTS_GENERATED/)
   })
 })

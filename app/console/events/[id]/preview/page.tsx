@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
-import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
-import { getEvent, listPrizes, listTracks, serializeEvent, serializePrize, serializeTrack } from '@/src/server/event-service'
+import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { getEvent, listPrizes, listTracks, managesAnyEvent, serializeEvent, serializePrize, serializeTrack } from '@/src/server/event-service'
 import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
 import { PreviewShell } from '@/components/console/preview-shell'
 import { formatSubmittedDate } from '@/src/lib/gallery'
@@ -22,7 +22,7 @@ export default async function EventPreviewPage({ params }: Params) {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
-  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  if (!(await managesAnyEvent(session.user))) redirect('/my-hackathons')
 
   const role = await getEffectiveRole(session.user, eventId)
   if (role !== 'SUPERADMIN' && role !== 'ORGANIZER') redirect('/console')

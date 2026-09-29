@@ -3,8 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 
 import Link from 'next/link'
 import { ListChecks } from 'lucide-react'
-import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
-import { getEvent, serializeEvent } from '@/src/server/event-service'
+import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
+import { getEvent, managesAnyEvent, serializeEvent } from '@/src/server/event-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +20,7 @@ export default async function ShortlistPage({ params }: Params) {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
-  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  if (!(await managesAnyEvent(session.user))) redirect('/my-hackathons')
 
   let event
   try {

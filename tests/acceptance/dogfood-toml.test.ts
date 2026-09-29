@@ -17,7 +17,7 @@ describe('dogfood:toml render (scripts/run.py input)', () => {
     const toml = renderDogfoodToml(input)
     expect(toml).toMatch('[portal]')
     expect(toml).toMatch('base_url = "http://localhost:3000"')
-    expect(toml).toMatch('claimed = ["T1", "T2"]')
+    expect(toml).toMatch('claimed = ["T1", "T2", "T3", "T4"]')
     expect(toml).toMatch('organizer   = "Cookie: dogfood_session=org-token"')
     expect(toml).toMatch('judge_a     = "Cookie: dogfood_session=judge-a-token"')
     expect(toml).toMatch('judge_b     = "Cookie: dogfood_session=judge-b-token"')

@@ -1,6 +1,8 @@
 # JUDGING — assignment, scoring, normalization
 
-Implementation: `src/server/judging-service.ts` (orchestration),
+Implementation: `src/server/judging-service.ts` (scoring & isolation)
+and `src/server/assignment-service.ts` (assignment engines, progress,
+rankings),
 `src/lib/judging/normalization.ts` (pure math), tables in
 `docs/SCHEMA.md`. Console surface: dashboard Judging tab; judge
 surface: `/judge`.

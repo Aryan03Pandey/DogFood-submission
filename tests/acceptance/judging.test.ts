@@ -207,7 +207,7 @@ describe('judging service contracts', () => {
   })
 
   it('selects the organizer-chosen assignment algorithm', () => {
-    const source = service()
+    const source = read('src/server/assignment-service.ts')
     expect(source).toMatch(/event\.assignmentAlgorithm/)
     expect(source).toMatch(/ROUND_ROBIN/)
     expect(source).toMatch(/rotateOrder\(rotation, pointer\)/)
@@ -364,7 +364,7 @@ describe('judging ui contracts', () => {
     expect(judges).toMatch(/apiSetJudgeTracks/)
     expect(judges).toMatch(/Save tracks/)
     expect(judges).toMatch(/will not receive assignments/)
-    expect(read('src/server/judging-service.ts')).toMatch(/innerJoin\(judgeTracks/)
+    expect(read('src/server/assignment-service.ts')).toMatch(/innerJoin\(judgeTracks/)
     // No remount-with-stale-props: resync comes from the server instead.
     expect(read('components/console/dashboard/judging-panel.tsx')).not.toMatch(/key=\{version\}/)
     const rubric = read('components/console/judging/rubric-builder.tsx')

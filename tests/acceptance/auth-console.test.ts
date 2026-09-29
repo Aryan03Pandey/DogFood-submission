@@ -37,10 +37,11 @@ describe('auth + console authorization (IMPROVEMENTS.md items 9-10)', () => {
   })
 
   it('denies the whole console to non-organizers on every page, URL included', () => {
-    const service = read('src/server/auth-service.ts')
-    expect(service).toMatch(/export async function hasConsoleAccess/)
-    expect(service).toMatch(/user\.role === 'SUPERADMIN'/)
-    expect(service).toMatch(/row\.role === 'ORGANIZER'/)
+    const service = read('src/server/event-service.ts')
+    expect(service).toMatch(/export async function managesAnyEvent/)
+    expect(service).toMatch(/user\.role === ['"]SUPERADMIN['"]/)
+    expect(service).toMatch(/row\.role === ['"]ORGANIZER['"]/)
+    expect(read('src/server/auth-service.ts')).not.toMatch(/hasConsoleAccess/)
     for (const file of [
       'app/console/page.tsx',
       'app/console/events/page.tsx',
@@ -50,7 +51,7 @@ describe('auth + console authorization (IMPROVEMENTS.md items 9-10)', () => {
       'app/console/events/[id]/shortlist/page.tsx',
     ]) {
       const page = read(file)
-      expect(page).toMatch(/hasConsoleAccess\(session\.user\)/)
+      expect(page).toMatch(/managesAnyEvent\(session\.user\)/)
       expect(page).toMatch(/redirect\('\/my-hackathons'\)/)
     }
     expect(read('components/footer.tsx')).not.toMatch(/href="\/console"/)

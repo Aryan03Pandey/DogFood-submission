@@ -89,7 +89,7 @@ Seeded accounts (`scripts/seed.ts`, password `DogfoodLocal1!` for all, or use th
 - `src/server/records-service.ts` — `getJudgeRecord` (aggregate-only participation attestation,
   no scores/comments) and `getResultsManifest` (public, gated on the event's derived status being
   `PUBLISHED`).
-- `src/server/judging-service.ts#getPublishedRankings` — the same ranking math `getRankings`
+- `src/server/assignment-service.ts#getPublishedRankings` — the same ranking math `getRankings`
   (organizer-only) uses, refactored so both share one `computeRankings` implementation.
 - `GET /api/judge/records?eventId=&judge=` — signed judge-record envelope.
 - `GET /api/events/:id/results-manifest.json` — signed, public results-manifest envelope.

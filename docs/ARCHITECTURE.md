@@ -46,7 +46,7 @@ The central rule (from `docs/spec.md`): **hiding UI is not access
 control.** Every judge/event/ownership-scoped read filters in the
 service/DB query (e.g. `assertEventOrganizer`, assignment-scoped score
 queries, `(id AND userId)` token revocation). Console pages additionally
-hard-redirect non-organizers via `hasConsoleAccess()`.
+hard-redirect non-organizers via `managesAnyEvent()`.
 
 ## Event lifecycle
 

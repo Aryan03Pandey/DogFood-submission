@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
+import { getSessionUser } from '@/src/server/auth-service'
+import { managesAnyEvent } from '@/src/server/event-service'
 import { EventWizard } from '@/components/console/event-wizard'
 
 export const dynamic = 'force-dynamic'
@@ -18,7 +19,7 @@ export default async function NewEventPage() {
   const token = (await cookies()).get('dogfood_session')?.value ?? ''
   const session = await getSessionUser(token)
   if (!session) redirect('/login')
-  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  if (!(await managesAnyEvent(session.user))) redirect('/my-hackathons')
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-5 py-12">

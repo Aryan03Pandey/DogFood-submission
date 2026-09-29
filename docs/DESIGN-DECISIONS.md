@@ -38,7 +38,7 @@ column — the recurring defense against stale-state bugs.
 Only SUPERADMIN is global; everything else resolves per event through
 `event_roles`. This matches the domain (people organize one hackathon
 and hack at another) and contains breaches to one event. Console pages
-belt-and-braces this with `hasConsoleAccess()` redirects, but the
+belt-and-braces this with `managesAnyEvent()` redirects, but the
 APIs never rely on it.
 
 ## Hashes at rest, raw values once

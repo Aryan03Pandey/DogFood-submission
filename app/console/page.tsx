@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { GoLiveControl } from '@/components/console/dashboard/go-live-control'
-import { AuthError, getEffectiveRole, getSessionUser, hasConsoleAccess } from '@/src/server/auth-service'
+import { AuthError, getEffectiveRole, getSessionUser } from '@/src/server/auth-service'
 import {
   getDashboardOverview,
   listDashboardGallery,
@@ -13,14 +13,10 @@ import {
   listDashboardSubmissionsPage,
   listEventMembers,
 } from '@/src/server/dashboard-service'
-import { getEvent, listManagedEvents, listPrizes, serializeEvent } from '@/src/server/event-service'
+import { getEvent, listManagedEvents, listPrizes, managesAnyEvent, serializeEvent } from '@/src/server/event-service'
 import { getPublicBaseUrl } from '@/src/server/public-url'
-import {
-  getAssignmentProgress,
-  getEventJudges,
-  getRankings,
-  getRubric,
-} from '@/src/server/judging-service'
+import { getEventJudges, getRubric } from '@/src/server/judging-service'
+import { getAssignmentProgress, getRankings } from '@/src/server/assignment-service'
 import { getVotingAnalytics } from '@/src/server/voting-service'
 import { listPrizeAwards } from '@/src/server/certificate-service'
 import { listWebhooks } from '@/src/server/webhook-service'
@@ -63,7 +59,7 @@ export default async function ConsolePage({
   if (!session) redirect('/login')
   // No console for non-organizers: participants, judges, and role-less
   // users leave before anything event-scoped renders, even via a pasted URL.
-  if (!(await hasConsoleAccess(session.user))) redirect('/my-hackathons')
+  if (!(await managesAnyEvent(session.user))) redirect('/my-hackathons')
 
   const allEvents = await listManagedEvents(session.user)
   const manageable = allEvents.map(serializeEvent)
