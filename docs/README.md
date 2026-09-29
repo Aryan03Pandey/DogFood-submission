@@ -9,3 +9,4 @@ Start here. One line per file — pick the question you're asking.
 - **What does it store?** → `SCHEMA.md` (tables, mermaid ERD, invariants)
 - **How does judging work?** → `JUDGING.md` (engines, scoring, isolation), `NORMALIZATION-PROOF.md` (fixture-data numbers)
 - **Is it honest?** → `TIER-CLAIMS.md` (claims vs gaps), `THREAT-MODEL.md` (stopped vs unstopped attacks), `DESIGN-DECISIONS.md` (why)
+- **Just visiting?** → `JUDGE-GUIDE.md` (click-and-play tour: accounts, signup, judging loop)

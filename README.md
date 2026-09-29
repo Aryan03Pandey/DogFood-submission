@@ -99,6 +99,8 @@ Postgres for these.
 - `docs/DESIGN-DECISIONS.md` — why the stack looks this way
 - `docs/THREAT-MODEL.md` — what abuse is stopped, what is not
 - `docs/NORMALIZATION-PROOF.md` — normalization on fixture data
+- `docs/JUDGE-GUIDE.md` — click-and-play tour for human judges
+  (accounts, roles, signup, creating/participating/managing/judging)
 - `docs/spec.md` — grading contract (read-only reference)
 
 ## License

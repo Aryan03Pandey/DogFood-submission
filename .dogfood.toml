@@ -2,14 +2,14 @@
 base_url = "http://localhost:3000"
 
 [tiers]
-claimed = ["T1", "T2"]
+claimed = ["T1", "T2", "T3", "T4"]
 pitch = "Dogfood 2026 hackathon portal."
 
 [auth]
-organizer   = "Cookie: dogfood_session=q_eLbAsXC-379OnRvQxV8UfrqIAe6_hoGyNIZd777aA"
-judge_a     = "Cookie: dogfood_session=N7jZRAjw5BVz9gmdDrW-7ES_rcvXKqz3XX4lhFkAeUw"
-judge_b     = "Cookie: dogfood_session=1HdWDH0po_G3ni-vss6BqfSS2qam_t4yKS_-ieEpOuY"
-participant = "Cookie: dogfood_session=zcSNLkhZ4gZKd0QDmFbw3OgxiU56iItfqVOMkEpcyeY"
+organizer   = "Cookie: dogfood_session=vCvRlVXM5W1qdzhfEv9kCeCm1DQOCCU25JfYVEsmWAY"
+judge_a     = "Cookie: dogfood_session=oYXDb2A3yhgz-2gHLcT2r4xRw45oYechl-mcobUDUY0"
+judge_b     = "Cookie: dogfood_session=U5wEhm7Mna0JxGaPpUku1R4nqCTsaIEn_qtx6OfIZt8"
+participant = "Cookie: dogfood_session=QYOqzaIU4fKFJYV3q0NDOtWCuILlJIB6dT9VH7bhm5A"
 
 [routes]
 gallery      = "/projects"
