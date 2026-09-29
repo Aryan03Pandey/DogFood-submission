@@ -43,7 +43,7 @@ export function SideDock({
           R
         </div>
         <div>
-          <p className="text-[15px] font-bold tracking-[-0.02em] text-foreground">dogfood</p>
+          <p className="text-[15px] font-bold tracking-[-0.02em] text-foreground">RaptorHack</p>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Admin console
           </p>
