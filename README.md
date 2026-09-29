@@ -36,8 +36,11 @@ users instantly via `/api/auth/impersonate` — dev-only by design.
 ## Acceptance check
 
 ```bash
-python3 scripts/run.py .dogfood.toml --fixtures src/db/fixtures.json > acceptance-report.txt
+python3 scripts/run.py .dogfood.toml > acceptance-report.txt
 ```
+
+(Works flagless because repo-root `fixtures.json` symlinks to
+`src/db/fixtures.json` — see `docs/HOW-DOGFOOD-TOML.md`.)
 
 Honest tier claims live in `.dogfood.toml` (`claimed = ["T1", "T2", "T3", "T4"]`);
 the committed `acceptance-report.txt` is the checker's own output.

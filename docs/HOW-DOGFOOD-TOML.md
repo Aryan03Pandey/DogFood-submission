@@ -38,8 +38,17 @@ The file embeds values that are random or install-specific:
   writes the repo-root file directly (needs Postgres reachable per
   `.env.example`).
 
-Then run the checker with fixtures:
+Then run the checker:
 
 ```
-python3 scripts/run.py .dogfood.toml --fixtures src/db/fixtures.json > acceptance-report.txt
+python3 scripts/run.py .dogfood.toml > acceptance-report.txt
 ```
+
+No `--fixtures` flag is needed: repo-root `fixtures.json` is a symlink
+to `src/db/fixtures.json`, placed there because `run.py` only searches
+the working directory, its own folder, and the config's folder for its
+answer key (the expected project titles for the gallery check). The
+symlink keeps a single source of truth — the database remains the only
+thing the portal itself ever reads; the checker just needs the file to
+know what to look for. If the symlink is ever missing, that check fails
+with "no fixture file was loaded" no matter what the gallery serves.
