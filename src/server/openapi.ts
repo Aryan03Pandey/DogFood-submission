@@ -817,6 +817,14 @@ export const apiRoutes: ApiRoute[] = [
     auth: true,
     response: z.string(),
   },
+  {
+    method: "get",
+    path: "/api/files/{...path}",
+    summary: "Stream a filer-stored asset same-origin (public)",
+    tags: ["upload"],
+    auth: false,
+    response: z.any(),
+  },
   // Tier 3 (voting/engagement, submission pipeline) + audit-log/duplicate-
   // detection routes merged in from master after T2/T3 landed — same
   // coverage-completeness stub pattern (z.any()) as the block above.

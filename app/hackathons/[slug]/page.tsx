@@ -14,6 +14,7 @@ import {
 } from '@/src/server/event-service'
 import { getMyTeam } from '@/src/server/team-service'
 import { formatSubmittedDate } from '@/src/lib/gallery'
+import { resolveFileUrl } from '@/src/lib/upload'
 import { getEventActionState, withEventSlug, type EventMembership } from '@/src/lib/event-access'
 import { EventAction } from '@/components/event-page/event-action'
 import { EventTabs } from '@/components/event-page/event-tabs'
@@ -117,9 +118,9 @@ export default async function EventPage({ params }: Params) {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <article className="overflow-hidden rounded-xl border border-border bg-card">
-        {event.bannerUrl ? (
+        {resolveFileUrl(event.bannerUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.bannerUrl} alt="" className="max-h-64 w-full object-cover" />
+          <img src={resolveFileUrl(event.bannerUrl)!} alt="" className="max-h-64 w-full object-cover" />
         ) : (
           <div className="flex h-32 items-center justify-center bg-muted" aria-hidden="true">
             <p className="text-[11px] font-semibold text-muted-foreground">Banner preview</p>
@@ -127,10 +128,10 @@ export default async function EventPage({ params }: Params) {
         )}
         <div className="p-6">
           <div className="flex items-center gap-3">
-            {event.logoUrl ? (
+            {resolveFileUrl(event.logoUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={event.logoUrl}
+                src={resolveFileUrl(event.logoUrl)!}
                 alt=""
                 className="size-14 shrink-0 rounded-xl border border-border object-cover"
               />

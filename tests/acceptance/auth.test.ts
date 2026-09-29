@@ -284,6 +284,7 @@ describe("T1 OpenAPI generated from Zod", () => {
       "/api/events/{id}/webhooks/{webhookId}",
       "/api/events/{id}/webhooks/{webhookId}/test",
       "/api/export.csv",
+      "/api/files/{...path}",
       "/api/health",
       "/api/judge/flags",
       "/api/judge/pairwise",

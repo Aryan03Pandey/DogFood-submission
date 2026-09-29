@@ -47,9 +47,31 @@ export function buildStorageKey(slot: UploadSlot, eventId: string, filename: str
   return `events/${eventId}/${slot}-${Date.now()}-${safe}`
 }
 
-// Public read base for filer-stored files. The browser cannot resolve the
-// in-compose hostname, so this must be host-reachable (dev publishes 8888).
+// Public read URL for filer-stored files. Same-origin by default
+// (/api/files/…) so browsers never touch the filer directly — its address
+// is a localhost/compose hostname that visitors can't resolve and that
+// private-network-access blocks from public pages. An explicit
+// SEAWEEDFS_PUBLIC_URL (e.g. a CDN in front of the filer) still wins.
 export function publicUploadUrl(path: string): string {
-  const base = process.env.SEAWEEDFS_PUBLIC_URL ?? 'http://localhost:8888'
-  return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+  const base = process.env.SEAWEEDFS_PUBLIC_URL
+  if (base) return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+  return `/api/files/${path.replace(/^\//, '')}`
+}
+
+// Rewrites legacy absolute filer URLs (rows written before the same-origin
+// proxy, e.g. http://localhost:8888/<bucket>/<key>) to /api/files/… so old
+// events heal without a migration. Anything else passes through untouched.
+export function resolveFileUrl(url: string | null | undefined): string | null {
+  if (url == null || url === '') return null
+  if (url.startsWith('/api/files/')) return url
+  const filerMatch = url.match(/^https?:\/\/([^/]+)\/(.+)$/)
+  if (!filerMatch) return url
+  const host = filerMatch[1].toLowerCase().split(':')[0]
+  // Only rewrite addresses that can never be visitor-reachable: localhost,
+  // loopback, or the in-compose filer hostname. Real CDNs/public hosts
+  // (even with ports) pass through untouched.
+  if (/(^|\.)localhost$/.test(host) || host.startsWith('127.') || host.includes('seaweedfs')) {
+    return `/api/files/${filerMatch[2]}`
+  }
+  return url
 }

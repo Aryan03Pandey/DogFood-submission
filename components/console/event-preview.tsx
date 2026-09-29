@@ -2,6 +2,7 @@ import { Calendar, Globe, MapPin, Users } from 'lucide-react'
 
 import { EventTabs } from '@/components/event-page/event-tabs'
 import { formatSubmittedDate } from '@/src/lib/gallery'
+import { resolveFileUrl } from '@/src/lib/upload'
 import type { PrizeTierInput, WizardData } from '@/src/lib/event-creation'
 
 function formatLabel(value: WizardData['format']): string {
@@ -41,9 +42,9 @@ export function EventPreview({
   ]
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-card">
-      {data.bannerUrl ? (
+      {resolveFileUrl(data.bannerUrl) ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={data.bannerUrl} alt="" className="max-h-64 w-full object-cover" />
+        <img src={resolveFileUrl(data.bannerUrl)!} alt="" className="max-h-64 w-full object-cover" />
       ) : (
         <div className="flex h-32 items-center justify-center bg-muted" aria-hidden="true">
           <p className="text-[11px] font-semibold text-muted-foreground">Banner preview</p>
@@ -51,10 +52,10 @@ export function EventPreview({
       )}
       <div className="p-6">
         <div className="flex items-center gap-3">
-          {data.logoUrl ? (
+          {resolveFileUrl(data.logoUrl) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={data.logoUrl}
+              src={resolveFileUrl(data.logoUrl)!}
               alt=""
               className="size-14 shrink-0 rounded-xl border border-border object-cover"
             />

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowUpRight, Calendar, ImageIcon } from 'lucide-react'
 
 import type { HackathonEvent } from '@/src/lib/hackathons'
+import { resolveFileUrl } from '@/src/lib/upload'
 
 // Shared event card for the homepage showcase and the /hackathons tabs.
 // Big banner-first card: the whole card links to the public event page
@@ -21,9 +22,9 @@ export default function EventCard({
       aria-label={`${event.title} — view event`}
       className="group flex h-[360px] w-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-cyan-400/60 hover:shadow-[0_0_36px_rgba(34,211,238,0.22)]"
     >
-      {event.cardBannerUrl ? (
+      {resolveFileUrl(event.cardBannerUrl) ? (
         <img
-          src={event.cardBannerUrl}
+          src={resolveFileUrl(event.cardBannerUrl)!}
           alt=""
           loading="lazy"
           className="h-44 w-full shrink-0 object-cover md:h-56"

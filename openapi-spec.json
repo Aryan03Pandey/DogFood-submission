@@ -6916,6 +6916,42 @@
         ]
       }
     },
+    "/api/files/{...path}": {
+      "get": {
+        "summary": "Stream a filer-stored asset same-origin (public)",
+        "tags": [
+          "upload"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/audit-logs": {
       "get": {
         "summary": "List an event's audit log entries (organizer only)",
