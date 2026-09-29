@@ -81,6 +81,18 @@ describe('wizard timeline', () => {
     }
   })
 
+  it('accepts same-origin /api/files media URLs in the media PATCH payload', () => {
+    for (const bannerUrl of [
+      '/api/files/dogfood-assets/events/e/banner-1.png',
+      'http://localhost:8888/dogfood-assets/events/e/banner-1.png',
+      'https://cdn.example.com/e/banner-1.png',
+    ]) {
+      expect(updateEventSchema.safeParse({ bannerUrl }).success).toBe(true)
+    }
+    expect(updateEventSchema.safeParse({ bannerUrl: 'not-a-url' }).success).toBe(false)
+    expect(updateEventSchema.safeParse({ websiteUrl: '/api/files/x.png' }).success).toBe(false)
+  })
+
   it('drops the retired start/end fields from the timeline payload', () => {
     const payload = timelinePayload(base)
     expect(payload).not.toHaveProperty('startTime')

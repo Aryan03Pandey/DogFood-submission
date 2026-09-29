@@ -282,10 +282,19 @@ const shellScheduleShape = {
   publicVotingEndTime: dateSchema.nullish(),
 };
 
+// Filer-hosted media: absolute URLs (legacy rows, CDN bases) or the
+// same-origin proxy path new uploads produce (/api/files/…).
+const fileUrlSchema = z
+  .string()
+  .max(500)
+  .refine((value) => /^\/api\/files\//.test(value) || z.string().url().safeParse(value).success, {
+    message: 'Expected an absolute URL or an /api/files/… path',
+  });
+
 const eventDetailsShape = {
-  logoUrl: z.string().url().max(500).nullish(),
-  bannerUrl: z.string().url().max(500).nullish(),
-  cardBannerUrl: z.string().url().max(500).nullish(),
+  logoUrl: fileUrlSchema.nullish(),
+  bannerUrl: fileUrlSchema.nullish(),
+  cardBannerUrl: fileUrlSchema.nullish(),
   websiteUrl: z.string().url().max(500).nullish(),
   descriptionHtml: z.string().max(200_000).nullish(),
   format: eventFormatSchema.optional(),
